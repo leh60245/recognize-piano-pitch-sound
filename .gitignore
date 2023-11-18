@@ -259,3 +259,6 @@ dist
 .pnp.*
 
 .DS_Store
+
+# build
+/build
