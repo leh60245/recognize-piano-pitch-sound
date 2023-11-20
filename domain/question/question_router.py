@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from database import SessionLocal
+from database import get_db
 from models import Question
 
 # 라우터 파일에 반드시 필요한 것은 APIRouter 클래스로 생성한 router 객체이다. 
@@ -13,7 +13,6 @@ router = APIRouter(
 
 @router.get("/list")
 def question_list():
-    db = SessionLocal()
-    _question_list = db.query(Question).order_by(Question.create_date.desc()).all()
-    db.close()
+    with get_db() as db:
+        _question_list = db.query(Question).order_by(Question.create_date.desc()).all()
     return _question_list
