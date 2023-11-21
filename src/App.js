@@ -5,7 +5,7 @@ import "./App.css";
 
 function App() {
   const webcamRef = useRef(null);
-  const [message, setMessage] = useState("");
+  const [question_list, setQuestionList] = useState([]);
 
   const capture = () => {
     const imageSrc = webcamRef.current.getScreenshot();
@@ -14,22 +14,29 @@ function App() {
   };
 
   useEffect(() => {
-    // API 호출
-    fetch("http://127.0.0.1:8000/hello")
-      .then((response) => response.json())
-      .then((json) => {
-        setMessage(json.message); // 상태 업데이트
+    fetch('http://127.0.0.1:8000/api/question/list')
+      .then((response) => { response.json()
+        .then((json) => {
+          setQuestionList(json);
+        })
       })
       .catch((error) => {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching question data:", error)
       });
-  }, []); // 빈 배열을 전달하여 한 번만 호출되도록 설정
+  }, []);
+
 
   return (
     <div className="App">
+      {question_list.map((elem, index) => {
+        return (
+          <div key={index}>
+            <h2>{elem.subject}</h2>
+          </div>
+        );
+      })}
       {/* <Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" />
       <button onClick={capture}>캡쳐</button> */}
-      <h1>{message}</h1>
     </div>
   );
 }
