@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from database import get_db
+from domain.question import question_schema
 from models import Question
 
 # 라우터 파일에 반드시 필요한 것은 APIRouter 클래스로 생성한 router 객체이다. 
@@ -12,7 +13,7 @@ router = APIRouter(
 )
 
 
-@router.get("/list")
+@router.get("/list", response_model=list[question_schema.Question])
 def question_list(db: Session = Depends(get_db)):
     _question_list = db.query(Question).order_by(Question.create_date.desc()).all()
     return _question_list
