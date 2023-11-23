@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import Webcam from "react-webcam";
+import Home from "./routes/home"
 
 import "./App.css";
 
@@ -13,28 +14,9 @@ function App() {
     console.log(imageSrc);
   };
 
-  useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/question/list')
-      .then((response) => { response.json()
-        .then((json) => {
-          setQuestionList(json);
-        })
-      })
-      .catch((error) => {
-        console.error("Error fetching question data:", error)
-      });
-  }, []);
-
-
   return (
     <div className="App">
-      {question_list.map((elem, index) => {
-        return (
-          <div key={index}>
-            <h2>{elem.subject}</h2>
-          </div>
-        );
-      })}
+      { Home() }
       {/* <Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" />
       <button onClick={capture}>캡쳐</button> */}
     </div>
