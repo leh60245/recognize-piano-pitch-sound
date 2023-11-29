@@ -1,28 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+
+import { Link } from 'react-router-dom';
 
 import "../App.css";
 
-function Home() {
-  const [question_list, setQuestionList] = useState([]);
-
-  useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/question/list")
-      .then((response) => {
-        response.json().then((json) => {
-          setQuestionList(json);
-        });
-      })
-      .catch((error) => {
-        console.error("Error fetching question data:", error);
-      });
-  }, []);
+function Home({props}) {
 
   return (
     <>
-      {question_list.map((elem, index) => {
+      {props.map((elem) => {
         return (
-          <div key={index}>
-            <h2>{elem.subject}</h2>
+          <div key={elem.id}>
+            <li>{elem.id}. {elem.subject}</li>
+            <Link to="/">link</Link>
           </div>
         );
       })}
