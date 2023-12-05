@@ -12,7 +12,6 @@ function Exercise({ props }) {
 
   const capture = () => {
     const imageSrc = webcamRef.current.getScreenshot();
-    // 캡쳐된 이미지를 사용하거나 저장할 수 있습니다.
     console.log(imageSrc);
   };
 

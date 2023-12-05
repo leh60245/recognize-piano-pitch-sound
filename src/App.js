@@ -1,92 +1,91 @@
 import { useEffect, useState } from "react";
-import { useRoutes, useNavigate, Link } from "react-router-dom";
+import { useRoutes, Link } from "react-router-dom";
 import {
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  Button,
-  ChakraProvider,
-  Box,
   Text,
-  VStack,
-  Grid,
-  theme,
-  Avatar,
-  Flex,
   Card,
   CardHeader,
   CardBody,
-  CardFooter,
-  Image,
-  Stack,
   Heading,
-  Divider,
-  ButtonGroup,
   SimpleGrid,
 } from "@chakra-ui/react";
 
 // Routes
 import Exercise from "./routes/exercise";
-// import Detail from "./routes/detail";
+import Setting from "./routes/setting";
+import Instruction from "./routes/instruction";
+
+// Utils
+import { getSpeech } from "./utils/getSpeech";
 
 // fastapi
-import fastapi from "./lib/api";
+// import fastapi from "./lib/api";
 
 import "./App.css";
 
 function Home({ props }) {
+  const [hover, setHover] = useState("");
+  const menuList = [
+    {
+      id: "exercise",
+      link: "/exercise",
+      icorn: "_Icon_exercise",
+      text: "오늘의 운동 시작",
+    },
+    {
+      id: "setting",
+      link: "/setting",
+      icorn: "_Icon_setting",
+      text: "개인 설정",
+    },
+    {
+      id: "instruction",
+      link: "/instruction",
+      icorn: "_Icon_instruction",
+      text: "사용 설명서",
+    },
+  ];
+  const linkMenuList = menuList.map((menu) => (
+    <Link to={menu.link} style={{ textDecoration: "none" }} onFocus={() => setHover(menu.text)} onBlur={() => setHover('')} >
+      <Card onMouseEnter={() => setHover(menu.text)} >
+        <CardHeader>
+          <Heading size="md"> {menu.icorn} </Heading>
+        </CardHeader>
+        <CardBody>
+          <Text>{menu.text}</Text>
+        </CardBody>
+      </Card>
+    </Link>
+  ));
+
+  useEffect(() => {
+    getSpeech(hover);
+    console.log(hover);
+  }, [hover]);
+
   return (
     <SimpleGrid
       spacing={4}
       templateColumns="repeat(auto-fill, minmax(200px, 1fr))"
     >
-      <Link to="/exercise" style={{ textDecoration: "none" }}>
-        <Card>
-          <CardHeader>
-            <Heading size="md"> _Icon_exercise </Heading>
-          </CardHeader>
-          <CardBody>
-            <Text>오늘의 운동 시작</Text>
-          </CardBody>
-        </Card>
-      </Link>
-      <Link to="/setting" style={{ textDecoration: "none" }}>
-        <Card>
-          <CardHeader>
-            <Heading size="md"> _Icon_setting </Heading>
-          </CardHeader>
-          <CardBody>
-            <Text>개인 설정</Text>
-          </CardBody>
-        </Card>
-      </Link>
-      <Link to="/instruction" style={{ textDecoration: "none" }}>
-        <Card>
-          <CardHeader>
-            <Heading size="md"> _Icon_instruction </Heading>
-          </CardHeader>
-          <CardBody>
-            <Text>사용 설명서</Text>
-          </CardBody>
-        </Card>
-      </Link>
+      {linkMenuList}
     </SimpleGrid>
   );
 }
 
 function App() {
-  const [question_list, setQuestionList] = useState([]);
+  // const [question_list, setQuestionList] = useState([]);
 
-  useEffect(() => {
-    fastapi("get", "/api/question/list", {}, (json) => {
-      setQuestionList(json);
-    });
-  }, []);
+  // useEffect(() => {
+  //   fastapi("get", "/api/question/list", {}, (json) => {
+  //     setQuestionList(json);
+  //   });
+  // }, []);
 
   const routes = useRoutes([
-    { path: "/", element: <Home props={question_list} /> },
+    { path: "/", element: <Home /> },
     { path: "/exercise", element: <Exercise /> },
+    { path: "/setting", element: <Setting /> },
+    { path: "/instruction", element: <Instruction /> },
   ]);
 
   return <div className="App">{routes}</div>;
