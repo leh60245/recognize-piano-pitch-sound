@@ -46,7 +46,7 @@ function Home({ props }) {
   ];
   const linkMenuList = menuList.map((menu) => (
     <Link to={menu.link} style={{ textDecoration: "none" }} onFocus={() => setHover(menu.text)} onBlur={() => setHover('')} >
-      <Card onMouseEnter={() => setHover(menu.text)} >
+      <Card onMouseEnter={() => setHover(menu.text)} onBlur={() => setHover('')} >
         <CardHeader>
           <Heading size="md"> {menu.icorn} </Heading>
         </CardHeader>
