@@ -1,10 +1,19 @@
 import React, { useRef, useEffect, useState } from "react";
 import Webcam from "react-webcam";
+import {
+  CircularProgress,
+  CircularProgressLabel,
+  SimpleGrid,
+  Box,
+} from "@chakra-ui/react";
 
 // Utils
 import { getSpeech } from "../utils/getSpeech";
 
 import "../App.css";
+
+// fastApi
+// import fastapi from "./lib/api";
 
 function Exercise({ props }) {
   const webcamRef = useRef(null);
@@ -14,6 +23,15 @@ function Exercise({ props }) {
     const imageSrc = webcamRef.current.getScreenshot();
     console.log(imageSrc);
   };
+
+  // 이미지 출력 결과 받기
+  // const [imgResult, setimgResult] = useState([]);
+
+  // useEffect(() => {
+  //   fastapi("get", "/api/question/list", {}, (json) => {
+  //     setimgResult(json);
+  //   });
+  // }, []);
 
   //음성 변환 목소리 preload
   useEffect(() => {
@@ -30,14 +48,23 @@ function Exercise({ props }) {
   };
 
   return (
-    <div>
-      <Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" />
-      <button onClick={capture}>캡쳐</button>
-      <div className="box">
-        <input onChange={handleInput} value={value} />
-        <button onClick={handleButton}>음성 변환</button>
-      </div>
-    </div>
+    <SimpleGrid columns={3} spacing={10}>
+      <Box>
+        <CircularProgress value={40} color="green" size='400px'>
+          <CircularProgressLabel>40%</CircularProgressLabel>
+        </CircularProgress>
+      </Box>
+      <Box>
+        <Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" />
+        <button onClick={capture}>캡쳐</button>
+      </Box>
+      <Box>
+        <div className="box">
+          <input onChange={handleInput} value={value} />
+          <button onClick={handleButton}>음성 변환</button>
+        </div>
+      </Box>
+    </SimpleGrid>
   );
 }
 
