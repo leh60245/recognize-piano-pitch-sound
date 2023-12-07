@@ -7,9 +7,13 @@ import {
   Box,
 } from "@chakra-ui/react";
 
+// tf
+import * as poseDetection from '@tensorflow-models/pose-detection';
+
 // Utils
 import { getSpeech } from "../utils/getSpeech";
 
+// CSS
 import "../App.css";
 
 // fastApi

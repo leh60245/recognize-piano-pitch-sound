@@ -17,10 +17,11 @@ function Setting({ props }) {
       resizeWidth: 224,
       resizeHeight: 224,
     }); // 이미지 데이터의 크기 지정
-    
+
     while (true) {
-      const img = await webcam.capture();   // 이미지를 나타내는 텐서를 반환. 
-      const result = await net.classify(img);   // 모델 추정 결과
+      const img = await webcam.capture(); // 이미지를 나타내는 텐서를 반환.
+      const result = await net.classify(img); // 모델 추정 결과
+
 
       if (figures.current) {
         figures.current.innerText = `prediction : ${result[0].className} \n probability: ${result[0].probability}`;
@@ -39,12 +40,12 @@ function Setting({ props }) {
     <>
       <div ref={figures}></div>
       <video
-        autoPlay = {true}
-        playsInline = {true}
+        autoPlay={true}
+        playsInline={true}
         muted={true}
         ref={camera}
-        width="870"
-        height="534"
+        width="500"
+        height="500"
       />
     </>
   );
