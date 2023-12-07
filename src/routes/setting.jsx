@@ -14,8 +14,8 @@ function Setting({ props }) {
     net = await mobilenet.load();
 
     const webcam = await tf.data.webcam(webcamElement, {
-      resizeWidth: 220,
-      resizeHeight: 227,
+      resizeWidth: 224,
+      resizeHeight: 224,
     }); // 이미지 데이터의 크기 지정
     
     while (true) {
@@ -33,14 +33,14 @@ function Setting({ props }) {
   };
   React.useEffect(() => {
     run();
-  });
+  }, []);
 
   return (
     <>
       <div ref={figures}></div>
       <video
-        autoPlay
-        playsInline
+        autoPlay = {true}
+        playsInline = {true}
         muted={true}
         ref={camera}
         width="870"
