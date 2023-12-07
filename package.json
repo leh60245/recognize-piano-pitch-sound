@@ -6,11 +6,16 @@
     "@chakra-ui/react": "^2.8.2",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@fontsource/open-sans": "^5.0.18",
+    "@fontsource/raleway": "^5.0.16",
+    "@fortawesome/fontawesome-svg-core": "^6.5.1",
+    "@fortawesome/react-fontawesome": "^0.2.0",
     "@tensorflow-models/mobilenet": "^2.1.1",
     "@tensorflow/tfjs": "^4.14.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "express": "^4.18.2",
     "framer-motion": "^10.16.12",
     "global": "^4.4.0",
     "react": "^18.2.0",
@@ -21,6 +26,7 @@
     "react-ts-typewriter": "^0.1.8-b",
     "react-webcam": "^7.2.0",
     "reactstrap": "^9.2.1",
+    "serve": "^14.2.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -46,5 +52,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "description": "<br/>\r <br/>",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC"
 }

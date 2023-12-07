@@ -77,6 +77,7 @@ function Instruction({ props }) {
       )}
     </div>
   );
+  return;
 }
 
 export default Instruction;

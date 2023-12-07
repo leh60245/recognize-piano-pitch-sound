@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useRoutes, Link } from "react-router-dom";
 import {
+  Image,
+  Box,
   Text,
   Card,
   CardHeader,
@@ -16,6 +18,8 @@ import Instruction from "./routes/instruction";
 
 // Utils
 import { getSpeech } from "./utils/getSpeech";
+
+import settingImg from "../public/"
 
 // fastapi
 // import fastapi from "./lib/api";
@@ -46,14 +50,18 @@ function Home({ props }) {
   ];
   const linkMenuList = menuList.map((menu) => (
     <Link to={menu.link} style={{ textDecoration: "none" }} onFocus={() => setHover(menu.text)} onBlur={() => setHover('')} >
-      <Card onMouseEnter={() => setHover(menu.text)} onBlur={() => setHover('')} >
+      <Box w='100%' h='100%' border='20px' backgroundColor='#009E73' >
+      <Card onMouseEnter={() => setHover(menu.text)} onBlur={() => setHover('')} maxW={{ base: '100%', sm: '200px' }}>
         <CardHeader>
-          <Heading size="md"> {menu.icorn} </Heading>
+          <Heading size="md" fontSize="10xl"> {menu.icorn} </Heading>
+          {settingImg}
+          
         </CardHeader>
         <CardBody>
-          <Text>{menu.text}</Text>
+          <Text fontSize="50px">{menu.text}</Text>
         </CardBody>
       </Card>
+      </Box>
     </Link>
   ));
 
