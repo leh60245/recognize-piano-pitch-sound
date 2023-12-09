@@ -27,6 +27,7 @@
     "react-ts-typewriter": "^0.1.8-b",
     "react-webcam": "^7.2.0",
     "reactstrap": "^9.2.1",
+    "scatter-gl": "^0.0.13",
     "serve": "^14.2.1",
     "web-vitals": "^2.1.4"
   },

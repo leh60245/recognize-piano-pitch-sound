@@ -1,0 +1,78 @@
+{
+  "name": "during_excercise",
+
+  "setting": "오늘의 목표 자세를 설명드리겠습니다. 목표 자세는 {str: 자세 이름}으로 {str: 자세 설명}입니다. 총 {int: 단계 개수} 단계로 이루어져 있으며 각 단계를 성공하시면 다음 단계로 넘어갑니다. 그럼 시작하겠습니다.",
+
+  "step": [
+    {
+      "id": 0,
+      "need_to_know_keypoints": [13, 14, 15, 16],
+      "wait_time": 8,
+      "use_model": false,
+      "recognize": "엄지 발가락, 새끼 발가락, 발 뒤꿈치 사이에 압력을 고르게 분배합니다."
+    },
+    {
+      "id": 1,
+      "need_to_know_keypoints": [13, 14, 15, 16],
+      "wait_time": 5,
+      "use_model": false,
+      "recognize": "발과 종아리가 바닥에 뿌리를 내리도록 하십시오."
+    },
+    {
+      "id": 2,
+      "need_to_know_keypoints": [5, 6, 7, 8, 9, 10],
+      "wait_time": 5,
+      "use_model": true,
+      "recognize": "팔꿈치를 약간 구부리고 손바닥이 앞을 향하도록 팔을 자연스럽게 늘어뜨립니다."
+    },
+    {
+      "id": 3,
+      "need_to_know_keypoints": [5, 6, 7, 8, 9, 10],
+      "wait_time": 5,
+      "use_model": true,
+      "recognize": "이제 손을 깍지 끼고 쭉 편 상태로 어깨까지 들어올립니다."
+    },
+    {
+      "id": 4,
+      "need_to_know_keypoints": [5, 6, 7, 8, 9, 10],
+      "wait_time": 5,
+      "use_model": true,
+      "recognize": "그대로 천장까지 쭉 올립니다."
+    },
+    {
+      "id": 5,
+      "need_to_know_keypoints": [5, 6, 7, 8, 9, 10],
+      "wait_time": 5,
+      "use_model": true,
+      "recognize": "5초간 대기합니다."
+    },
+    {
+      "id": 6,
+      "need_to_know_keypoints": [5, 6, 7, 8, 9, 10],
+      "wait_time": 5,
+      "use_model": true,
+      "recognize": "좋습니다. 이제 올렸던 팔을 쭉 편 상태 그대로 어깨까지 내립니다."
+    },
+    {
+      "id": 7,
+      "need_to_know_keypoints": [5, 6, 7, 8, 9, 10, 11, 12],
+      "wait_time": 5,
+      "use_model": true,
+      "recognize": "마지막으로 깍지를 풀며 처음 자세로 돌아갑니다."
+    }
+  ],
+
+  "end": "이것으로 오늘의 운동을 마치겠습니다. 고생하셨습니다.",
+
+  "cannot_recognize": {
+    "Explanation": "카메라가 사용자님을 파악할 수 없습니다.",
+
+    "because": {
+      "too_far": "현재 사용자님과 어플 사이의 거리가 많이 멉니다. 카메라와의 거리를 좁혀 주시기 바랍니다.",
+
+      "too_close": "현재 사용자님의 일부 부위를 파악할 수 없습니다. 카메라와의 거리를 충분히 벌려주시기 바랍니다."
+    }
+  },
+
+  "can_recognize": "사용자님의 몸이 모두 파악했습니다. 다시 운동을 진행하겠습니다."
+}

@@ -7,8 +7,10 @@ import {
   Card,
   CardHeader,
   CardBody,
-  Heading,
+  Container,
   SimpleGrid,
+  HStack,
+  Center,
 } from "@chakra-ui/react";
 
 // Routes
@@ -31,6 +33,8 @@ import "./App.css";
 
 function Home({ props }) {
   const [hover, setHover] = useState("");
+  const [isPaused, setIsPaused] = useState(false);
+
   const menuList = [
     {
       id: "exercise",
@@ -78,19 +82,16 @@ function Home({ props }) {
     </Link>
   ));
 
+  // 텍스트가 변경되면 읽어줍니다.
   useEffect(() => {
+    // const synth = window.speechSynthesis;
+    // synth.pause();
+
     getSpeech(hover);
     console.log(hover);
   }, [hover]);
 
-  return (
-    <SimpleGrid
-      spacing={4}
-      templateColumns="repeat(auto-fill, minmax(200px, 1fr))"
-    >
-      {linkMenuList}
-    </SimpleGrid>
-  );
+  return <Center><HStack>{linkMenuList}</HStack></Center>;
 }
 
 function App() {

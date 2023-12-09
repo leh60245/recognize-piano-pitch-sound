@@ -25,7 +25,6 @@ function Exercise({ props }) {
   const canvasRef = useRef(null);
   const [value, setValue] = useState("안녕하세요");
   
-
   // load posenet
   const runPosenet = async () => {
     await tf.ready();
@@ -52,10 +51,10 @@ function Exercise({ props }) {
       // 비디오 넓이 지정
       webcamRef.current.video.width = videoWidth;
       webcamRef.current.video.height = videoHeight;
-
+      
       // 디텍션 시작
-      const poses = await net.estimatePoses(video);
-      console.log(poses);
+      // const poses = await net.estimatePoses(video);
+      // console.log(poses);
     }
   };
 
