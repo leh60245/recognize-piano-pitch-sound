@@ -17,25 +17,63 @@ import { getSpeech } from "../utils/getSpeech";
 // CSS
 import "../App.css";
 
-// fastApi
-// import fastapi from "./lib/api";
+// 이미지를 서버에 전송하는 함수
+const sendImageToServer = async (imageSrc) => {
+  try {
+    // console.log(imageSrc);
+    // console.log(typeof imageSrc);
+    const response = await fetch("http://localhost:8000/uploadfile/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ image_str: imageSrc }),
+    });
+    // 서버로부터 응답 처리
+    const data = await response.json();
+    // console.log(data);
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
+
+// 운동 전 함수
 
 function Exercise({ props }) {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
+  const intervalRef = useRef(null);
   const [value, setValue] = useState("안녕하세요");
-  
+  const [accrue, setAccrue] = useState(0);
+  // 포즈 정확도를 위한 상태 변수
+  const [poseAccuracy, setPoseAccuracy] = useState(0);
+
   // load posenet
   const runPosenet = async () => {
     await tf.ready();
-    const detectorConfig = {modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING};
-    const net = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, detectorConfig);
-
-    // 계속 감지
-    setInterval(() => {
-      detect(net);
-    }, 100);
+    const detectorConfig = {
+      modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+    };
+    const net = await poseDetection.createDetector(
+      poseDetection.SupportedModels.MoveNet,
+      detectorConfig
+    );
+    return net;
   };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    runPosenet().then((net) => {
+      if (isMounted) {
+        detect(net); // 첫 번째 호출
+      }
+    });
+
+    return () => {
+      isMounted = false; // 컴포넌트 언마운트 시 상태 업데이트
+    };
+  }, []);
 
   const detect = async (net) => {
     if (
@@ -47,18 +85,38 @@ function Exercise({ props }) {
       const video = webcamRef.current.video;
       const videoWidth = webcamRef.current.video.videoWidth;
       const videoHeight = webcamRef.current.video.videoHeight;
-
+      const imageSrc = webcamRef.current.getScreenshot();
       // 비디오 넓이 지정
       webcamRef.current.video.width = videoWidth;
       webcamRef.current.video.height = videoHeight;
-      
+
       // 디텍션 시작
-      // const poses = await net.estimatePoses(video);
-      // console.log(poses);
+      const poses = await net.estimatePoses(video);
+      // let bodyVisible =
+      //   poses.length > 0 && poses[0].keypoints.some((kp) => kp.score >= 0.5);
+
+      // console.log(bodyVisible);
+      // if (!bodyVisible) {
+      //   setAccrue((accrue) => accrue + 1);
+      // } else {
+      //   setAccrue(0);
+      // }
+      if (poses.length > 0) {
+        // 각 키포인트 점수의 평균을 계산하여 정확도 계산
+        const scores = poses[0].keypoints.map((kp) => kp.score);
+        const averageScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+
+        // 정확도를 퍼센트로 변환 (0에서 100 사이)
+        setPoseAccuracy(averageScore * 100);
+      }
+
+      // 이미지 보내기
+      sendImageToServer(imageSrc);
+
+      // detect 함수가 완료된 후, 1초(1000ms) 후에 다시 호출
+      setTimeout(() => detect(net), 5000);
     }
   };
-
-  runPosenet();
 
   const capture = () => {
     const imageSrc = webcamRef.current.getScreenshot();
@@ -82,8 +140,10 @@ function Exercise({ props }) {
   return (
     <SimpleGrid columns={3} spacing={10}>
       <Box>
-        <CircularProgress value={40} color="green" size="400px">
-          <CircularProgressLabel>40%</CircularProgressLabel>
+        <CircularProgress value={poseAccuracy} color={poseAccuracy > 20 ? "green" : "red"} size="400px">
+          <CircularProgressLabel>
+            {poseAccuracy.toFixed(0)}%
+          </CircularProgressLabel>
         </CircularProgress>
       </Box>
       <Box>
@@ -131,12 +191,3 @@ function Exercise({ props }) {
 }
 
 export default Exercise;
-
-// 이미지 출력 결과 받기
-// const [imgResult, setimgResult] = useState([]);
-
-// useEffect(() => {
-//   fastapi("get", "/api/question/list", {}, (json) => {
-//     setimgResult(json);
-//   });
-// }, []);
