@@ -17,6 +17,10 @@ import { getSpeech } from "../utils/getSpeech";
 // CSS
 import "../App.css";
 
+// Data
+import beforeExerciseData from "./before_exercise.json";
+import duringExerciseData from "./during_exercise.json";
+
 // 이미지를 서버에 전송하는 함수
 const sendImageToServer = async (imageSrc) => {
   try {
@@ -37,16 +41,65 @@ const sendImageToServer = async (imageSrc) => {
   }
 };
 
-// 운동 전 함수
+// 포즈 감지 함수
+const detectPose = async (net, webcamRef) => {
+  if (
+    typeof webcamRef.current !== "undefined" &&
+    webcamRef.current !== null &&
+    webcamRef.current.video.readyState === 4
+  ) {
+    const video = webcamRef.current.video;
+    const poses = await net.estimatePoses(video);
+    return poses;
+  }
+  return null;
+};
+
+// 이미지 캡처 함수
+const captureImage = (webcamRef) => {
+  return webcamRef.current ? webcamRef.current.getScreenshot() : null;
+};
+
+// 포즈 정확도 계산 함수
+const calculatePoseAccuracy = (poses) => {
+  if (poses && poses.length > 0) {
+    const scores = poses[0].keypoints.map((kp) => kp.score);
+    return scores.reduce((a, b) => a + b, 0) / scores.length;
+  }
+  return 0;
+};
+
+const needAIModel = async (imageSrc, step) => {
+  // 비동기 작업
+  const response = await sendImageToServer(imageSrc);
+  // 결과 처리
+  // step의 wait_time만큼 대기
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(response); // wait_time 후에 Promise 해결
+    }, step.wait_time * 1000); // wait_time이 초 단위라고 가정
+  });
+};
+
+// needAlternativeMethod 함수 - AI 모델이 필요 없을 때 사용
+const needAlternativeMethod = (step) => {
+  // 다른 처리 로직
+  console.log("Alternative method for step", step.id);
+  // Promise 반환을 위한 예시 (실제 구현에 따라 다를 수 있음)
+  return new Promise((resolve) => {
+    // 처리 로직
+    resolve();
+  });
+};
 
 function Exercise({ props }) {
-  const webcamRef = useRef(null);
-  const canvasRef = useRef(null);
-  const intervalRef = useRef(null);
-  const [value, setValue] = useState("안녕하세요");
-  const [accrue, setAccrue] = useState(0);
-  // 포즈 정확도를 위한 상태 변수
-  const [poseAccuracy, setPoseAccuracy] = useState(0);
+  const webcamRef = useRef(null); // webcam
+  const canvasRef = useRef(null); // canvas
+  const [poseAccuracy, setPoseAccuracy] = useState(0); // 포즈 정확도를 위한 상태 변수
+
+  const [currentStep, setCurrentStep] = useState(0); // 현재 단계
+  const [isProcessing, setIsProcessing] = useState(false);
+  const stepsData = duringExerciseData.step; // 단계별 데이터
 
   // load posenet
   const runPosenet = async () => {
@@ -61,12 +114,19 @@ function Exercise({ props }) {
     return net;
   };
 
+  // useEffect 내부
+  useEffect(() => {
+
+    // 현재 step의 처리
+    processCurrentStep();
+  }, [currentStep]);
+
   useEffect(() => {
     let isMounted = true;
 
     runPosenet().then((net) => {
       if (isMounted) {
-        detect(net); // 첫 번째 호출
+        processPoseDetection(net); // 첫 번째 호출
       }
     });
 
@@ -75,63 +135,48 @@ function Exercise({ props }) {
     };
   }, []);
 
-  const detect = async (net) => {
-    if (
-      typeof webcamRef.current !== "undefined" &&
-      webcamRef.current !== null &&
-      webcamRef.current.video.readyState === 4
-    ) {
-      // 비디오 속성 가져오기.
-      const video = webcamRef.current.video;
-      const videoWidth = webcamRef.current.video.videoWidth;
-      const videoHeight = webcamRef.current.video.videoHeight;
-      const imageSrc = webcamRef.current.getScreenshot();
-      // 비디오 넓이 지정
-      webcamRef.current.video.width = videoWidth;
-      webcamRef.current.video.height = videoHeight;
+  // 현재 step의 처리를 수행하는 함수
+  const processCurrentStep = async () => {
+    const step = stepsData[currentStep];
+    if (step && !isProcessing) {
+      setIsProcessing(true);
 
-      // 디텍션 시작
-      const poses = await net.estimatePoses(video);
-      if (poses.length > 0) {
-        // 각 키포인트 점수의 평균을 계산하여 정확도 계산
-        const scores = poses[0].keypoints.map((kp) => kp.score);
-        const averageScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+      const imageSrc = captureImage(webcamRef);
+      const promise = step.use_model
+        ? needAIModel(imageSrc, step)
+        : needAlternativeMethod(step);
+      await promise;
+      console.log(currentStep);
+      console.log(promise);
+      setIsProcessing(false);
 
-        // 정확도를 퍼센트로 변환 (0에서 100 사이)
-        setPoseAccuracy(averageScore * 100);
+      // 다음 단계로 진행
+      if (currentStep < stepsData.length - 1) {
+        setCurrentStep((current) => current + 1);
       }
-
-      // 이미지 보내기
-      sendImageToServer(imageSrc);
-
-      // detect 함수가 완료된 후, 1초(1000ms) 후에 다시 호출
-      setTimeout(() => detect(net), 5000);
     }
   };
 
-  const capture = () => {
-    const imageSrc = webcamRef.current.getScreenshot();
-    console.log(imageSrc);
-  };
+  // 포즈 감지 및 처리 로직
+  const processPoseDetection = async (net) => {
+    const poses = await detectPose(net, webcamRef);
+    if (poses) {
+      const accuracy = calculatePoseAccuracy(poses);
+      setPoseAccuracy(accuracy * 100);
+    }
 
-  //음성 변환 목소리 preload
-  useEffect(() => {
-    window.speechSynthesis.getVoices();
-  }, []);
-
-  const handleInput = (e) => {
-    const { value } = e.target;
-    setValue(value);
-  };
-
-  const handleButton = () => {
-    getSpeech(value);
+    // 함수 실행이 완료된 후 일정 시간(1초 = 1000) 후에 다시 호출
+    setTimeout(() => processPoseDetection(net), 10000);
   };
 
   return (
     <SimpleGrid columns={3} spacing={10}>
       <Box>
-        <CircularProgress value={poseAccuracy} color={poseAccuracy > 20 ? "green" : "red"} size="400px">
+        <CircularProgress
+          value={poseAccuracy}
+          color={poseAccuracy > 20 ? "green" : "red"}
+          size="400px"
+        >
           <CircularProgressLabel>
             {poseAccuracy.toFixed(0)}%
           </CircularProgressLabel>
@@ -169,13 +214,9 @@ function Exercise({ props }) {
             height: 480,
           }}
         />
-        <button onClick={capture}>캡쳐</button>
       </Box>
       <Box>
-        <div className="box">
-          <input onChange={handleInput} value={value} />
-          <button onClick={handleButton}>음성 변환</button>
-        </div>
+        <div className="box"></div>
       </Box>
     </SimpleGrid>
   );
