@@ -92,15 +92,6 @@ function Exercise({ props }) {
 
       // 디텍션 시작
       const poses = await net.estimatePoses(video);
-      // let bodyVisible =
-      //   poses.length > 0 && poses[0].keypoints.some((kp) => kp.score >= 0.5);
-
-      // console.log(bodyVisible);
-      // if (!bodyVisible) {
-      //   setAccrue((accrue) => accrue + 1);
-      // } else {
-      //   setAccrue(0);
-      // }
       if (poses.length > 0) {
         // 각 키포인트 점수의 평균을 계산하여 정확도 계산
         const scores = poses[0].keypoints.map((kp) => kp.score);
