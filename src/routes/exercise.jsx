@@ -142,7 +142,7 @@ function Exercise({ props }) {
         await new Promise((resolve) => setTimeout(resolve, 3000));
         const imageSrc = captureImage(webcamRef);
         const response = await sendImageToServer(imageSrc);
-        if (step.class !== response.predict_class) {
+        if (step.class !== response.predicted_class) {
           // 자세가 틀렸을 때
           await speakText(duringExerciseData.check[0]);
           await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -172,7 +172,7 @@ function Exercise({ props }) {
     }
 
     // 함수 실행이 완료된 후 일정 시간(1초 = 1000) 후에 다시 호출
-    setTimeout(() => processPoseDetection(net), 4000);
+    setTimeout(() => processPoseDetection(net), 3000);
   };
 
   // useEffect 내부
