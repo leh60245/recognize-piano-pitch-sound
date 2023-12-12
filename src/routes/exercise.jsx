@@ -1,10 +1,13 @@
 import React, { useRef, useEffect, useState } from "react";
 import Webcam from "react-webcam";
+import { useNavigate } from "react-router-dom";
+
 import {
   CircularProgress,
   CircularProgressLabel,
   SimpleGrid,
   Box,
+  Text,
 } from "@chakra-ui/react";
 
 // tf
@@ -12,7 +15,7 @@ import * as tf from "@tensorflow/tfjs";
 import * as poseDetection from "@tensorflow-models/pose-detection";
 
 // Utils
-import { getSpeech } from "../utils/getSpeech";
+import { speakText } from "../utils/getSpeech";
 
 // CSS
 import "../App.css";
@@ -69,16 +72,11 @@ const calculatePoseAccuracy = (poses) => {
   return 0;
 };
 
-// text 길이만큼 음성 알림을 하며 대기합니다.
-const speakText = async (text) => {
-  getSpeech(text);
-  const delay = text.length * 100;
-  await new Promise((resolve) => setTimeout(resolve, delay));
-};
-
 function Exercise({ props }) {
+  const critical_point = 50;
   const webcamRef = useRef(null); // webcam
   const canvasRef = useRef(null); // canvas
+  const navigate = useNavigate();
 
   const [poses, setPoses] = useState(null); // 감지된 포즈 상태
   const [poseAccuracy, setPoseAccuracy] = useState(0); // 포즈 정확도를 위한 상태 변수
@@ -111,16 +109,21 @@ function Exercise({ props }) {
       await speakText(step.recognize);
       // 5초 대기
       await new Promise((resolve) => setTimeout(resolve, 5000));
+      console.log(stepsData.length);
+      // 마지막 스텝까지 오면 종료
+      if (currentStep === stepsData.length - 1) navigate("/");
 
       // 필요한 keypoints가 모두 감지되었는지 확인
+      const now_pose = poses;
       const allKeyPointsDetected =
-        poses !== null
-          ? step.need_to_know_keypoints.every(
-              (keypointIndex) => poses[0].keypoints[keypointIndex].score > 0.4
-            )
+        now_pose !== null && now_pose.length > 0 && now_pose[0] !== undefined
+          ? step.need_to_know_keypoints.every((keypointIndex) => {
+              const keypoint = now_pose[0].keypoints[keypointIndex];
+              return keypoint && keypoint.score > 0.4;
+            })
           : false;
 
-      if (poses === null) {
+      if (now_pose === null) {
         // 전혀 사람이 보이지 않거나 카메라가 사람 일부분도 찾지 못할 때.
         await speakText(duringExerciseData.cannot_recognize[2].recognize);
         await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -136,10 +139,22 @@ function Exercise({ props }) {
 
       // 모델 사용 여부
       if (step.use_model) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         const imageSrc = captureImage(webcamRef);
         const response = await sendImageToServer(imageSrc);
-        // console.log(response);
-      } else {
+        console.log(response);
+        console.log(response.predict_class);
+        if (step.class !== response.predict_class) {
+          await speakText(
+            "자세가 올바르지 않습니다. 설명을 다시 듣고 따라해 주시기 바랍니다."
+          );
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+          setIsProcessing(false);
+          return;
+        } else {
+          await speakText("좋습니다. 다음 단계로 넘어갑니다.");
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+        }
       }
 
       setCurrentStep((current) => current + 1);
@@ -155,8 +170,8 @@ function Exercise({ props }) {
       setPoses(detectedPoses);
       const accuracy = calculatePoseAccuracy(detectedPoses);
       setPoseAccuracy(accuracy * 100);
-      console.log(accuracy);
-    } 
+      console.log("movenet의 정확도", accuracy);
+    }
 
     // 함수 실행이 완료된 후 일정 시간(1초 = 1000) 후에 다시 호출
     setTimeout(() => processPoseDetection(net), 4000);
@@ -181,12 +196,27 @@ function Exercise({ props }) {
     };
   }, []);
 
+  useEffect(() => {
+    // 컴포넌트가 언마운트될 때 호출되는 정리 함수
+    return () => {
+      if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        // 현재 재생 중인 음성이 있으면 중단
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
   return (
     <SimpleGrid columns={3} spacing={10}>
       <Box>
+        <Text
+          color={poseAccuracy > { critical_point } ? "green" : "red"}
+          fontSize="50px"
+        >
+          인식 {poseAccuracy > { critical_point } ? "좋음" : "나쁨"}
+        </Text>
         <CircularProgress
           value={poseAccuracy}
-          color={poseAccuracy > 20 ? "green" : "red"}
+          color={poseAccuracy > { critical_point } ? "green" : "red"}
           size="400px"
         >
           <CircularProgressLabel>

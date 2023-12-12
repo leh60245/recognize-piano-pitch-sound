@@ -39,3 +39,10 @@ export const getSpeech = (text) => {
 
   speech(text);
 };
+
+// text 길이만큼 음성 알림을 하며 대기합니다.
+export const speakText = async (text) => {
+  getSpeech(text);
+  const delay = text.length * 100;
+  await new Promise((resolve) => setTimeout(resolve, delay));
+};

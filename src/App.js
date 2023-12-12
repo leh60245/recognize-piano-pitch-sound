@@ -83,6 +83,16 @@ function Home({ props }) {
     console.log(hover);
   }, [hover]);
 
+  useEffect(() => {
+    // 컴포넌트가 언마운트될 때 호출되는 정리 함수
+    return () => {
+      if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        // 현재 재생 중인 음성이 있으면 중단
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
   return (
     <Center>
       <HStack>{linkMenuList}</HStack>

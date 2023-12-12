@@ -7,20 +7,23 @@
       "need_to_know_keypoints": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
       "wait_time": 10,
       "use_model": true,
+      "class": 1,
       "recognize": "   오늘의 목표 자세를 설명드리겠습니다."
     },
     {
       "id": 1,
       "need_to_know_keypoints": [13, 14, 15, 16],
       "wait_time": 8,
-      "use_model": false,
+      "use_model": true,
+      "class": 1,
       "recognize": "첫번째. 엄지 발가락 새끼 발가락 발 뒤꿈치 사이에 압력을 고르게 분배합니다."
     },
     {
       "id": 2,
       "need_to_know_keypoints": [13, 14, 15, 16],
       "wait_time": 5,
-      "use_model": false,
+      "use_model": true,
+      "class": 1,
       "recognize": "두번째. 발과 종아리가 바닥에 뿌리를 내리도록 하십시오."
     },
     {
@@ -28,41 +31,47 @@
       "need_to_know_keypoints": [5, 6, 7, 8, 9, 10],
       "wait_time": 5,
       "use_model": true,
+      "class": 1,
       "recognize": "세번째. 팔꿈치를 약간 구부리고 손바닥이 앞을 향하도록 팔을 자연스럽게 늘어뜨립니다."
     },
     {
       "id": 4,
-      "need_to_know_keypoints": [5, 6, 7, 8, 9, 10],
+      "need_to_know_keypoints": [5, 6, 7, 8],
       "wait_time": 5,
       "use_model": true,
+      "class": 1,
       "recognize": "네번째. 이제 손을 깍지 끼고 쭉 편 상태로 어깨까지 들어올립니다."
     },
     {
       "id": 5,
-      "need_to_know_keypoints": [5, 6, 7, 8, 9, 10],
+      "need_to_know_keypoints":[5, 6, 7, 8],
       "wait_time": 5,
       "use_model": true,
+      "class": 2,
       "recognize": "다섯번째. 그대로 천장까지 쭉 올립니다."
     },
     {
       "id": 6,
-      "need_to_know_keypoints": [5, 6, 7, 8, 9, 10],
+      "need_to_know_keypoints": [5, 6, 7, 8],
       "wait_time": 5,
       "use_model": true,
+      "class": 2,
       "recognize": "5초간 대기합니다."
     },
     {
       "id": 7,
-      "need_to_know_keypoints": [5, 6, 7, 8, 9, 10],
+      "need_to_know_keypoints": [5, 6, 7, 8],
       "wait_time": 5,
       "use_model": true,
-      "recognize": "좋습니다. 이제 올렸던 팔을 쭉 편 상태 그대로 어깨까지 내립니다."
+      "class": 1,
+      "recognize": "이제 올렸던 팔을 쭉 편 상태 그대로 어깨까지 내립니다."
     },
     {
       "id": 8,
       "need_to_know_keypoints": [5, 6, 7, 8, 9, 10, 11, 12],
       "wait_time": 5,
-      "use_model": true,
+      "use_model": false,
+      "class": null,
       "recognize": "마지막으로 깍지를 풀며 처음 자세로 돌아갑니다."
     },
     {
@@ -70,6 +79,7 @@
       "need_to_know_keypoints": [],
       "wait_time": 5,
       "use_model": false,
+      "class": null,
       "recognize": "이것으로 오늘의 운동을 마치겠습니다. 고생하셨습니다."
     }
   ],
