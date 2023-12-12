@@ -17,7 +17,7 @@ import Setting from "./routes/setting";
 import Instruction from "./routes/instruction";
 
 // Utils
-import { getSpeech } from "./utils/getSpeech";
+import { speakText } from "./utils/getSpeech";
 
 // img
 import exerciseImg from "./src/stretching-exercises.png";
@@ -52,20 +52,47 @@ function Home({ props }) {
       text: "사용 설명서",
     },
   ];
+
+  // 마우스가 메뉴 위에 있을 때 음성 재생
+  const handleMouseEnter = (text) => {
+    speakText(text);
+    setHover(text);
+  };
+
+  // 마우스가 메뉴에서 벗어날 때 음성 중단
+  const handleMouseLeave = () => {
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+    setHover("");
+  };
+
+  // 포커스가 메뉴 위에 있을 때 음성 재생
+  const handleFocus = (text) => {
+    speakText(text);
+    setHover(text);
+  };
+
+  // 포커스가 메뉴에서 벗어날 때 음성 중단
+  const handleBlur = () => {
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+    setHover("");
+  };
+
   const linkMenuList = menuList.map((menu) => (
     <Link
       key={menu.id}
       to={menu.link}
       style={{ textDecoration: "none" }}
-      onFocus={() => setHover(menu.text)}
-      onBlur={() => setHover("")}
+      onMouseEnter={() => handleMouseEnter(menu.text)}
+      onMouseLeave={handleMouseLeave}
+      onFocus={() => handleFocus(menu.text)}
+      onBlur={handleBlur}
     >
       <Box w="100%" h="100%" border="20px" backgroundColor="#009E73">
-        <Card
-          onMouseEnter={() => setHover(menu.text)}
-          onBlur={() => setHover("")}
-          maxW={{ base: "100%", sm: "200px" }}
-        >
+        <Card maxW={{ base: "100%", sm: "200px" }}>
           <CardHeader>
             <Image w="100%" h="100%" id="image" src={menu.img} />
           </CardHeader>
@@ -77,9 +104,7 @@ function Home({ props }) {
     </Link>
   ));
 
-  // 텍스트가 변경되면 읽어줍니다.
   useEffect(() => {
-    getSpeech(hover);
     console.log(hover);
   }, [hover]);
 
