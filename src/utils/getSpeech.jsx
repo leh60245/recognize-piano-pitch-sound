@@ -42,7 +42,9 @@ export const getSpeech = (text) => {
 
 // text 길이만큼 음성 알림을 하며 대기합니다.
 export const speakText = async (text) => {
-  getSpeech(text);
+  setTimeout(() => {
+    getSpeech(text);
+  }, 500); // 500ms 지연 후 음성 재생
   const delay = text.length * 100;
   await new Promise((resolve) => setTimeout(resolve, delay));
 };

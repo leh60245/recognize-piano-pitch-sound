@@ -21,7 +21,7 @@ import { speakText } from "../utils/getSpeech";
 import "../App.css";
 
 // Data
-import beforeExerciseData from "./before_exercise.json";
+// import beforeExerciseData from "./before_exercise.json";
 import duringExerciseData from "./during_exercise.json";
 
 // 이미지를 서버에 전송하는 함수
@@ -114,7 +114,7 @@ function Exercise({ props }) {
       if (currentStep === stepsData.length - 1) navigate("/");
 
       // 필요한 keypoints가 모두 감지되었는지 확인
-      const now_pose = poses;
+      const now_pose = poses; // poses 데이터 저장
       const allKeyPointsDetected =
         now_pose !== null && now_pose.length > 0 && now_pose[0] !== undefined
           ? step.need_to_know_keypoints.every((keypointIndex) => {
@@ -142,17 +142,15 @@ function Exercise({ props }) {
         await new Promise((resolve) => setTimeout(resolve, 3000));
         const imageSrc = captureImage(webcamRef);
         const response = await sendImageToServer(imageSrc);
-        console.log(response);
-        console.log(response.predict_class);
         if (step.class !== response.predict_class) {
-          await speakText(
-            "자세가 올바르지 않습니다. 설명을 다시 듣고 따라해 주시기 바랍니다."
-          );
+          // 자세가 틀렸을 때
+          await speakText(duringExerciseData.check[0]);
           await new Promise((resolve) => setTimeout(resolve, 5000));
           setIsProcessing(false);
           return;
         } else {
-          await speakText("좋습니다. 다음 단계로 넘어갑니다.");
+          // 자세가 옳바를 때
+          await speakText(duringExerciseData.check[1]);
           await new Promise((resolve) => setTimeout(resolve, 5000));
         }
       }
