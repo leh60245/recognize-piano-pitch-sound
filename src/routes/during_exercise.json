@@ -1,13 +1,18 @@
 {
   "name": "during_excercise",
-
+  "today_mission": [
+    {
+      "id": 0,
+      "recognize": "오늘의 목표 자세를 설명드리겠습니다. 목표 자세는 Tadasana로 한국말로는 마운틴 자세입니다. 총 8 단계로 이루어져 있으며 각 단계를 성공하시면 다음 단계로 넘어갑니다."
+    }
+  ],
   "step": [
     {
       "id": 0,
       "need_to_know_keypoints": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
       "use_model": false,
       "class": null,
-      "recognize": "오늘의 목표 자세를 설명드리겠습니다."
+      "recognize": "우선 카메라에 사용자 님이 모두 보일 수 있도록 조정하고 시작하겠습니다."
     },
     {
       "id": 1,
@@ -39,7 +44,7 @@
     },
     {
       "id": 5,
-      "need_to_know_keypoints":[5, 6, 7, 8],
+      "need_to_know_keypoints": [5, 6, 7, 8],
       "use_model": true,
       "class": 2,
       "recognize": "다섯번째. 그대로 천장까지 쭉 올립니다."
@@ -88,14 +93,14 @@
       "recognize": "현재 사용자님을 인식할 수 없습니다. 우선 카메라 안으로 들어와 주시기 바랍니다."
     }
   ],
-  "check":[
+  "check": [
     {
-      "id":0,
-      "recognize":"자세가 올바르지 않습니다. 설명을 다시 듣고 따라해 주시기 바랍니다."
+      "id": 0,
+      "recognize": "자세가 올바르지 않습니다. 설명을 다시 듣고 따라해 주시기 바랍니다."
     },
     {
-      "id":1,
-      "recognize":"좋습니다. 다음 단계로 넘어갑니다."
+      "id": 1,
+      "recognize": "좋습니다. 다음 단계로 넘어갑니다."
     }
   ]
 }

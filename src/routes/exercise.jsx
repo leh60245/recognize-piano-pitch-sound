@@ -73,7 +73,7 @@ const calculatePoseAccuracy = (poses) => {
 };
 
 function Exercise({ props }) {
-  const critical_point = 50;
+  const critical_point = 40;
   const webcamRef = useRef(null); // webcam
   const canvasRef = useRef(null); // canvas
   const navigate = useNavigate();
@@ -142,15 +142,16 @@ function Exercise({ props }) {
         await new Promise((resolve) => setTimeout(resolve, 3000));
         const imageSrc = captureImage(webcamRef);
         const response = await sendImageToServer(imageSrc);
+        console.log(response.predicted_class);
         if (step.class !== response.predicted_class) {
           // 자세가 틀렸을 때
-          await speakText(duringExerciseData.check[0]);
+          await speakText(duringExerciseData.check[0].recognize);
           await new Promise((resolve) => setTimeout(resolve, 5000));
           setIsProcessing(false);
           return;
         } else {
           // 자세가 옳바를 때
-          await speakText(duringExerciseData.check[1]);
+          await speakText(duringExerciseData.check[1].recognize);
           await new Promise((resolve) => setTimeout(resolve, 5000));
         }
       }
@@ -186,6 +187,7 @@ function Exercise({ props }) {
     runPosenet().then((net) => {
       if (isMounted) {
         processPoseDetection(net); // 첫 번째 호출
+        speakText(duringExerciseData.today_mission[0].recognize);
         setIsProcessing(false);
       }
     });
@@ -193,11 +195,10 @@ function Exercise({ props }) {
       isMounted = false; // 컴포넌트 언마운트 시 상태 업데이트
     };
   }, []);
-
   useEffect(() => {
     // 컴포넌트가 언마운트될 때 호출되는 정리 함수
     return () => {
-      if (window.speechSynthesis && window.speechSynthesis.speaking) {
+      if (window.speechSynthesis) {
         // 현재 재생 중인 음성이 있으면 중단
         window.speechSynthesis.cancel();
       }
@@ -207,14 +208,14 @@ function Exercise({ props }) {
     <SimpleGrid columns={3} spacing={10}>
       <Box>
         <Text
-          color={poseAccuracy > { critical_point } ? "green" : "red"}
+          color={poseAccuracy > critical_point ? "green" : "red"}
           fontSize="50px"
         >
-          인식 {poseAccuracy > { critical_point } ? "좋음" : "나쁨"}
+          인식 {poseAccuracy > critical_point ? "좋음" : "나쁨"}
         </Text>
         <CircularProgress
           value={poseAccuracy}
-          color={poseAccuracy > { critical_point } ? "green" : "red"}
+          color={poseAccuracy > critical_point ? "green" : "red"}
           size="400px"
         >
           <CircularProgressLabel>
