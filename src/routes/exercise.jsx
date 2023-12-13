@@ -78,7 +78,7 @@ function Exercise({ props }) {
   const critical_point = 40;
   const webcamRef = useRef(null); // webcam
   const canvasRef = useRef(null); // canvas
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // page간 이동
 
   const [poses, setPoses] = useState(null); // 감지된 포즈 상태
   const [poseAccuracy, setPoseAccuracy] = useState(0); // 포즈 정확도를 위한 상태 변수
@@ -87,7 +87,7 @@ function Exercise({ props }) {
   const [isProcessing, setIsProcessing] = useState(true); // 단계 진행 가능 여부
 
   const stepsData = duringExerciseData.step; // 단계별 데이터
-  const keypointsKoreaNames = keypointsKoreaName.ko_name; // 한국 이름
+  const keypointsKoreaNames = keypointsKoreaName.ko_name; // keypoints의 한국 이름
 
   const getKeypointName = (id) => {
     return keypointsKoreaNames[id].ko_name || "알 수 없음";
@@ -283,16 +283,16 @@ function Exercise({ props }) {
         />
       </Box>
       <Box>
-        <Text color="black" fontSize="50px">
-          현재 {currentStep} 번째 단계 입니다.
+        <Text color="black" fontSize="40px">
+          현재 {currentStep}번 단계 입니다.
         </Text>
         <CircularProgress
-          value={(currentStep / (stepsData.length - 1)) * 100}
+          value={(currentStep / (stepsData.length - 2)) * 100}
           color="#008000"
           size="400px"
         >
           <CircularProgressLabel>
-            {currentStep.toFixed(0)} / {stepsData.length - 1}
+            {currentStep.toFixed(0)} / {stepsData.length - 2}
           </CircularProgressLabel>
         </CircularProgress>
       </Box>
