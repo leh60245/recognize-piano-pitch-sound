@@ -54,21 +54,21 @@
       "need_to_know_keypoints": [5, 6, 7, 8],
       "use_model": true,
       "class": 2,
-      "recognize": "5초간 대기합니다."
+      "recognize": "여섯번째. 5초간 대기합니다."
     },
     {
       "id": 7,
       "need_to_know_keypoints": [5, 6, 7, 8],
       "use_model": true,
       "class": 1,
-      "recognize": "이제 올렸던 팔을 쭉 편 상태 그대로 어깨까지 내립니다."
+      "recognize": "일곱번째. 이제 올렸던 팔을 쭉 편 상태 그대로 어깨까지 내립니다."
     },
     {
       "id": 8,
       "need_to_know_keypoints": [5, 6, 7, 8],
       "use_model": false,
       "class": null,
-      "recognize": "마지막으로 깍지를 풀며 처음 자세로 돌아갑니다."
+      "recognize": "여덟번째. 마지막으로 깍지를 풀며 처음 자세로 돌아갑니다."
     },
     {
       "id": 9,
