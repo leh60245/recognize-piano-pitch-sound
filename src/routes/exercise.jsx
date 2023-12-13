@@ -75,7 +75,6 @@ const calculatePoseAccuracy = (poses) => {
 };
 
 function Exercise({ props }) {
-  const critical_point = 40;
   const webcamRef = useRef(null); // webcam
   const canvasRef = useRef(null); // canvas
   const navigate = useNavigate(); // page간 이동
@@ -86,10 +85,13 @@ function Exercise({ props }) {
   const [currentStep, setCurrentStep] = useState(0); // 현재 단계
   const [isProcessing, setIsProcessing] = useState(true); // 단계 진행 가능 여부
 
+  const critical_point = 40; // Movenet 감지 score 임계값
   const thresholdByClass = [0.3, 0.38, 0.32]; // 각 클레스 별 임계값
+
   const stepsData = duringExerciseData.step; // 단계별 데이터
   const keypointsKoreaNames = keypointsKoreaName.ko_name; // keypoints의 한국 이름
 
+  // keypoints의 korea name 가져오는 함수
   const getKeypointName = (id) => {
     return keypointsKoreaNames[id].ko_name || "알 수 없음";
   };
