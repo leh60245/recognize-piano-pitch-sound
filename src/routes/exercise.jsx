@@ -24,6 +24,7 @@ import "../App.css";
 // Data
 // import beforeExerciseData from "./before_exercise.json";
 import duringExerciseData from "./during_exercise.json";
+import keypointsKoreaName from "./keypoints_korea_name.json";
 
 // 이미지를 서버에 전송하는 함수
 const sendImageToServer = async (imageSrc) => {
@@ -84,7 +85,13 @@ function Exercise({ props }) {
 
   const [currentStep, setCurrentStep] = useState(0); // 현재 단계
   const [isProcessing, setIsProcessing] = useState(true); // 단계 진행 가능 여부
+
   const stepsData = duringExerciseData.step; // 단계별 데이터
+  const keypointsKoreaNames = keypointsKoreaName.ko_name; // 한국 이름
+
+  const getKeypointName = (id) => {
+    return keypointsKoreaNames[id].ko_name || "알 수 없음";
+  };
 
   // 뒤로 가기 함수
   const handleGoBack = () => {
@@ -121,13 +128,15 @@ function Exercise({ props }) {
 
       // 필요한 keypoints가 모두 감지되었는지 확인
       const now_pose = poses; // poses 데이터 저장
-      const allKeyPointsDetected =
-        now_pose !== null && now_pose.length > 0 && now_pose[0] !== undefined
-          ? step.need_to_know_keypoints.every((keypointIndex) => {
-              const keypoint = now_pose[0].keypoints[keypointIndex];
-              return keypoint && keypoint.score > 0.4;
-            })
-          : false;
+      const undetectedKeypoints = step.need_to_know_keypoints
+        .filter((keypointIndex) => {
+          const keypoint =
+            poses && poses.length > 0
+              ? poses[0].keypoints[keypointIndex]
+              : null;
+          return !keypoint || keypoint.score <= 0.4;
+        })
+        .map(getKeypointName);
 
       if (now_pose === null) {
         // 전혀 사람이 보이지 않거나 카메라가 사람 일부분도 찾지 못할 때.
@@ -135,9 +144,12 @@ function Exercise({ props }) {
         await new Promise((resolve) => setTimeout(resolve, 5000));
         setIsProcessing(false);
         return;
-      } else if (!allKeyPointsDetected) {
-        // 필요한 keypoints가 감지되지 않은 경우 처리 로직
-        await speakText(duringExerciseData.cannot_recognize[1].recognize);
+      } else if (undetectedKeypoints.length > 0) {
+        // 감지되지 않은 keypoints에 대한 음성 메시지
+        const message = `보이지 않는 부위가 있습니다: ${undetectedKeypoints.join(
+          ", "
+        )}입니다. 다시 조정 바랍니다.`;
+        await speakText(message);
         await new Promise((resolve) => setTimeout(resolve, 5000));
         setIsProcessing(false);
         return;
