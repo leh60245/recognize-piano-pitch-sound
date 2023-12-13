@@ -258,7 +258,21 @@ function Exercise({ props }) {
         />
       </Box>
       <Box>
-        <div className="box"></div>
+        <Text
+          color="black"
+          fontSize="50px"
+        >
+          현재 {currentStep} 번째 단계 입니다.
+        </Text>
+        <CircularProgress
+          value={currentStep / (stepsData.length - 1)}
+          color={poseAccuracy > critical_point ? "green" : "red"}
+          size="400px"
+        >
+          <CircularProgressLabel>
+            {currentStep.toFixed(0)}
+          </CircularProgressLabel>
+        </CircularProgress>
       </Box>
     </SimpleGrid>
   );
