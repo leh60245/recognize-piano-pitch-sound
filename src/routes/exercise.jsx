@@ -86,6 +86,7 @@ function Exercise({ props }) {
   const [currentStep, setCurrentStep] = useState(0); // 현재 단계
   const [isProcessing, setIsProcessing] = useState(true); // 단계 진행 가능 여부
 
+  const thresholdByClass = [0.3, 0.38, 0.32]; // 각 클레스 별 임계값
   const stepsData = duringExerciseData.step; // 단계별 데이터
   const keypointsKoreaNames = keypointsKoreaName.ko_name; // keypoints의 한국 이름
 
@@ -122,7 +123,7 @@ function Exercise({ props }) {
       await speakText(step.recognize);
       // 5초 대기
       await new Promise((resolve) => setTimeout(resolve, 5000));
-      console.log(stepsData.length);
+
       // 마지막 스텝까지 오면 종료
       if (currentStep === stepsData.length - 1) navigate("/");
 
@@ -160,9 +161,17 @@ function Exercise({ props }) {
         await new Promise((resolve) => setTimeout(resolve, 3000));
         const imageSrc = captureImage(webcamRef);
         const response = await sendImageToServer(imageSrc);
-        console.log(response.predicted_class);
-        if (step.class !== response.predicted_class) {
-          // 자세가 틀렸을 때
+        // console.log(
+        //   step.class,
+        //   response.predicted_class,
+        //   response.acc_arr[step.class],
+        //   thresholdByClass[step.class]
+        // );
+        if (
+          step.class !== response.predicted_class &&
+          response.acc_arr[step.class] < thresholdByClass[step.class]
+        ) {
+          // 예측한 class가 다르고, 실제로 일정 임계값 보다 정확도가 작다면 틀린 자세로 인정
           await speakText(duringExerciseData.check[0].recognize);
           await new Promise((resolve) => setTimeout(resolve, 5000));
           setIsProcessing(false);

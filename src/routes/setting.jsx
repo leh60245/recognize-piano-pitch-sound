@@ -1,40 +1,25 @@
 import React, { useState } from "react";
 import { CirclePicker } from "react-color";
-import {
-  Image,
-  Box,
-  Text,
-  Card,
-  CardHeader,
-  CardBody,
-  HStack,
-  Center,
-  Heading,
-} from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
 
+import { Heading, Container } from "@chakra-ui/react";
+import { CloseIcon } from "@chakra-ui/icons";
+
+// CSS
 import "../App.css";
-import { Container } from "reactstrap";
 
 //Editor: 신성호(CheshireZzz)
 //Edit Date/Time: 12/12/2023 04:03:24 UTC+9
 
-class Component extends React.Component {
-  state = {
-    background: "#fff",
-  };
-
-  handleChangeComplete = (color, event) => {
-    this.setState({ background: color.hex });
-  };
-
-  render() {
-    return <CirclePicker onChangeComplete={this.handleChangeComplete} />;
-  }
-}
-
 // 배경을 변경해주는 Color Picker
 const Setting = () => {
   const [color, setColor] = useState("#000");
+  const navigate = useNavigate(); // page간 이동
+
+  // 뒤로 가기 함수
+  const handleGoBack = () => {
+    navigate(-1); // 이전 페이지로 이동
+  };
 
   const handleChangeComplete = (color) => {
     setColor(color.hex);
@@ -45,6 +30,13 @@ const Setting = () => {
   // CirclePicker 사용한 이유: 해당 라이브러리에서 사이즈 변경 가능한 유일한 Color Picker였음
   return (
     <Container>
+      <CloseIcon
+        onClick={handleGoBack}
+        position="absolute"
+        left="10px"
+        top="10px"
+        boxSize={40}
+      />
       <Heading as="h1" size="7xl">
         배경 화면 색상 변경
       </Heading>
