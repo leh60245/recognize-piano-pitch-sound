@@ -17,7 +17,7 @@ import Setting from "./routes/setting";
 import Instruction from "./routes/instruction";
 
 // Utils
-import { speakText } from "./utils/getSpeech";
+import { getSpeech } from "./utils/getSpeech";
 
 // img
 import exerciseImg from "./src/stretching-exercises.png";
@@ -55,7 +55,7 @@ function Home({ props }) {
 
   // 마우스가 메뉴 위에 있을 때 음성 재생
   const handleMouseEnter = (text) => {
-    speakText(text);
+    getSpeech(text);
     setHover(text);
   };
 
@@ -69,7 +69,7 @@ function Home({ props }) {
 
   // 포커스가 메뉴 위에 있을 때 음성 재생
   const handleFocus = (text) => {
-    speakText(text);
+    getSpeech(text);
     setHover(text);
   };
 
