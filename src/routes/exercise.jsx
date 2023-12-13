@@ -208,14 +208,14 @@ function Exercise({ props }) {
     <SimpleGrid columns={3} spacing={10}>
       <Box>
         <Text
-          color={poseAccuracy > critical_point ? "green" : "red"}
+          color={poseAccuracy > critical_point ? "#008000" : "#800080"}
           fontSize="50px"
         >
           인식 {poseAccuracy > critical_point ? "좋음" : "나쁨"}
         </Text>
         <CircularProgress
           value={poseAccuracy}
-          color={poseAccuracy > critical_point ? "green" : "red"}
+          color={poseAccuracy > critical_point ? "#008000" : "#800080"}
           size="400px"
         >
           <CircularProgressLabel>
@@ -258,19 +258,16 @@ function Exercise({ props }) {
         />
       </Box>
       <Box>
-        <Text
-          color="black"
-          fontSize="50px"
-        >
+        <Text color="black" fontSize="50px">
           현재 {currentStep} 번째 단계 입니다.
         </Text>
         <CircularProgress
-          value={currentStep / (stepsData.length - 1)}
-          color={poseAccuracy > critical_point ? "green" : "red"}
+          value={currentStep / (stepsData.length - 1) * 100}
+          color="#008000"
           size="400px"
         >
           <CircularProgressLabel>
-            {currentStep.toFixed(0)}
+            {currentStep.toFixed(0)} / {stepsData.length - 1}
           </CircularProgressLabel>
         </CircularProgress>
       </Box>
