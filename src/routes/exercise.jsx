@@ -9,6 +9,7 @@ import {
   Box,
   Text,
 } from "@chakra-ui/react";
+import { CloseIcon } from "@chakra-ui/icons";
 
 // tf
 import * as tf from "@tensorflow/tfjs";
@@ -84,6 +85,11 @@ function Exercise({ props }) {
   const [currentStep, setCurrentStep] = useState(0); // 현재 단계
   const [isProcessing, setIsProcessing] = useState(true); // 단계 진행 가능 여부
   const stepsData = duringExerciseData.step; // 단계별 데이터
+
+  // 뒤로 가기 함수
+  const handleGoBack = () => {
+    navigate(-1); // 이전 페이지로 이동
+  };
 
   // load movenet
   const runPosenet = async () => {
@@ -207,6 +213,13 @@ function Exercise({ props }) {
   return (
     <SimpleGrid columns={3} spacing={10}>
       <Box>
+        <CloseIcon
+          onClick={handleGoBack}
+          position="absolute"
+          left="10px"
+          top="10px"
+          boxSize={40}
+        />
         <Text
           color={poseAccuracy > critical_point ? "#008000" : "#800080"}
           fontSize="50px"
@@ -262,7 +275,7 @@ function Exercise({ props }) {
           현재 {currentStep} 번째 단계 입니다.
         </Text>
         <CircularProgress
-          value={currentStep / (stepsData.length - 1) * 100}
+          value={(currentStep / (stepsData.length - 1)) * 100}
           color="#008000"
           size="400px"
         >
