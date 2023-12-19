@@ -1,27 +1,16 @@
-<br/>
-<br/>
+# 개요
 
-<p align="center">
-<img src="https://files.cloudtype.io/logo/cloudtype-logo-horizontal-black.png" width="50%" alt="Cloudtype"/>
-</p>
+시각장애인의 홈트레이닝을 위한 운동 도우미 애플리케이션
 
-<br/>
-<br/>
+# 당면한 사실/문제
 
-# React
+- 여러 장애 유형 중 사물을 보는 기능에 장애가 있는 __시각장애__의 경우 신체 활동력이 타 장애에 비해 더 낮습니다. 운동을 하지 않는 주된 이유는 시간이 없거나 장애와 관련한 건강 악화를 염려하기 때문이라 합니다. 
 
-프론트엔드 JavaScript 라이브러리 React 템플릿입니다.
+- 시각 장애인의 운동 참여 실태를 확인해보면 주로 집안, 주변 산책로, 맨손체조, 스트레칭 정도의 가벼운 운동을 즐기고 있습니다. 
 
+- 시각장애인을 위한 운동 프로그램의 조사결과에 따르면, 시각장애로 인하여 동작이나 움직임에 대한 동시적이고 내재적인 피드백이 이루어지지 않아 프로그램의 수행 및 만족도의 부정적인 영향을 미치고 있다 합니다.
 
-## 💬 문제해결
+- 중증장애인을 위한 1대1 혹은 방문 형태의 운동 지원이 필요하며, 장애인스포츠 강좌이용권 사업은 실제로 혜택을 받기 어려운 제도적 한계가 있다고 합니다. 찾아가는 생활체육 서비스의 경우어데 서비스의 실제 제공이 어렵다고 합니다.
 
-- [클라우드타입 Docs](https://docs.cloudtype.io/)
+# 제시하고자 하는 해결안
 
-- [클라우드타입 FAQ](https://help.cloudtype.io/guide/faq)
-
-- [Discord](https://discord.gg/U7HX4BA6hu)
-
-
-## 📄 License
-
-[MIT](https://github.com/facebook/react/blob/main/LICENSE)
