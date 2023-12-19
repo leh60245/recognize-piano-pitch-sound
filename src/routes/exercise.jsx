@@ -22,7 +22,6 @@ import { speakText } from "../utils/getSpeech";
 import "../App.css";
 
 // Data
-// import beforeExerciseData from "./before_exercise.json";
 import duringExerciseData from "./during_exercise.json";
 import keypointsKoreaName from "./keypoints_korea_name.json";
 
@@ -86,7 +85,7 @@ function Exercise({ props }) {
   const [isProcessing, setIsProcessing] = useState(true); // 단계 진행 가능 여부
 
   const critical_point = 40; // Movenet 감지 score 임계값
-  const thresholdByClass = [0.3, 0.38, 0.32]; // 각 클레스 별 임계값
+  const thresholdByClass = [0.2, 0.2, 0.2]; // 각 클레스 별 임계값
 
   const stepsData = duringExerciseData.step; // 단계별 데이터
   const keypointsKoreaNames = keypointsKoreaName.ko_name; // keypoints의 한국 이름
@@ -101,7 +100,7 @@ function Exercise({ props }) {
     navigate(-1); // 이전 페이지로 이동
   };
 
-  // load movenet
+  // MoveNet 로드하는 함수
   const runPosenet = async () => {
     await tf.ready();
     const detectorConfig = {
@@ -125,7 +124,6 @@ function Exercise({ props }) {
       await speakText(step.recognize);
       // 5초 대기
       await new Promise((resolve) => setTimeout(resolve, 5000));
-
       // 마지막 스텝까지 오면 종료
       if (currentStep === stepsData.length - 1) navigate("/");
 
@@ -160,20 +158,15 @@ function Exercise({ props }) {
 
       // 모델 사용 여부
       if (step.use_model) {
+        // 이미지를 서버에 보내고 결과를 받음
         await new Promise((resolve) => setTimeout(resolve, 3000));
         const imageSrc = captureImage(webcamRef);
         const response = await sendImageToServer(imageSrc);
-        // console.log(
-        //   step.class,
-        //   response.predicted_class,
-        //   response.acc_arr[step.class],
-        //   thresholdByClass[step.class]
-        // );
         if (
           step.class !== response.predicted_class &&
           response.acc_arr[step.class] < thresholdByClass[step.class]
         ) {
-          // 예측한 class가 다르고, 실제로 일정 임계값 보다 정확도가 작다면 틀린 자세로 인정
+          // 예측한 class가 다르고, 실제로 일정 임계값 보다 정확도가 작다면 틀린 자세로 판단
           await speakText(duringExerciseData.check[0].recognize);
           await new Promise((resolve) => setTimeout(resolve, 5000));
           setIsProcessing(false);
@@ -190,7 +183,7 @@ function Exercise({ props }) {
     setIsProcessing(false);
   };
 
-  // 포즈 감지 및 처리 로직
+  // 포즈 감지 및 처리 로직 함수
   const processPoseDetection = async (net) => {
     const detectedPoses = await detectPose(net, webcamRef); // 감지합니다.
 
@@ -205,12 +198,14 @@ function Exercise({ props }) {
     setTimeout(() => processPoseDetection(net), 3000);
   };
 
-  // useEffect 내부
+  // 다음 스텝으로 넘어가는 함수
   useEffect(() => {
     if (!isProcessing) {
       processCurrentStep();
     }
   }, [currentStep, isProcessing]);
+
+  // 매 초마다 신체의 정확도를 측정하는 함수
   useEffect(() => {
     let isMounted = true;
     runPosenet().then((net) => {
@@ -224,8 +219,9 @@ function Exercise({ props }) {
       isMounted = false; // 컴포넌트 언마운트 시 상태 업데이트
     };
   }, []);
+
+  // 컴포넌트가 언마운트될 때 호출되는 정리 함수
   useEffect(() => {
-    // 컴포넌트가 언마운트될 때 호출되는 정리 함수
     return () => {
       if (window.speechSynthesis) {
         // 현재 재생 중인 음성이 있으면 중단
