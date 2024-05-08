@@ -24,14 +24,19 @@
     "react-color": "^2.19.3",
     "react-dom": "^18.2.0",
     "react-icons": "^4.12.0",
+    "react-media-recorder": "^1.6.6",
+    "react-mic": "^12.4.6",
     "react-router-dom": "^6.20.1",
     "react-scripts": "^5.0.1",
+    "react-speech-recognition": "^3.10.0",
     "react-ts-typewriter": "^0.1.8-b",
     "react-webcam": "^7.2.0",
     "reactstrap": "^9.2.1",
     "scatter-gl": "^0.0.13",
     "serve": "^14.2.1",
-    "web-vitals": "^2.1.4"
+    "wavesurfer.js": "^7.7.13",
+    "web-vitals": "^2.1.4",
+    "yarn": "^1.22.22"
   },
   "scripts": {
     "start": "react-scripts start",
