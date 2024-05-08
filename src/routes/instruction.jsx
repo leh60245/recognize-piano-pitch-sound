@@ -6,72 +6,72 @@ import WaveSurfer from 'wavesurfer.js';
 
 const AudioStreamer = () => {
   const [isRecording, setIsRecording] = useState(false);
-  const [metronomeActive, setMetronomeActive] = useState(false);
-  const [socket, setSocket] = useState(null);
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
-
-  useEffect(() => {
-    // Initialize WebSocket connection
-    const newSocket = new WebSocket('ws://localhost:8000');
-    setSocket(newSocket);
-    return () => {
-      newSocket.close();
-    };
-  }, []);
+  const mediaStream = useRef(null); // Hold the media stream
 
   useEffect(() => {
     // Setup the Wavesurfer instance
-    if (waveformRef.current) {
+    if (waveformRef.current && !wavesurfer.current) {
       wavesurfer.current = WaveSurfer.create({
         container: waveformRef.current,
         waveColor: 'violet',
         progressColor: 'purple',
         height: 100,
-        barWidth: 2
+        barWidth: 2,
+        responsive: true,
+        backend: 'MediaElement'
       });
     }
-
-    return () => wavesurfer.current && wavesurfer.current.destroy();
+    return () => {
+      if (wavesurfer.current) {
+        wavesurfer.current.destroy();
+      }
+    };
   }, []);
 
   const startRecording = () => {
-    setMetronomeActive(true);
-    let count = 0;
-    const metronomeInterval = setInterval(() => {
-      console.log('Tick'); // Simulate metronome tick
-      count++;
-      if (count >= 4) {
-        clearInterval(metronomeInterval);
-        setMetronomeActive(false);
-        setIsRecording(true);
-
-        // Start visualizing the audio
+    setIsRecording(true);
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        mediaStream.current = stream; // Store the stream globally
         if (wavesurfer.current) {
-          navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-              wavesurfer.current.loadMediaElement(stream);
-              wavesurfer.current.play();
-            });
+          const audioContext = new AudioContext();
+          const mediaStreamSource = audioContext.createMediaStreamSource(stream);
+          const mediaElement = document.createElement('audio');
+          mediaElement.srcObject = stream;
+          mediaElement.addEventListener('loadedmetadata', () => {
+            mediaElement.play();
+          });
+          wavesurfer.current.load(mediaElement);
         }
-      }
-    }, 1000);
+      })
+      .catch(err => {
+        console.error("Error accessing the microphone:", err);
+        setIsRecording(false);
+      });
   };
 
-  useEffect(() => {
-    if (isRecording) {
-      // Implement your existing recording logic here
+  const stopRecording = () => {
+    setIsRecording(false);
+    if (wavesurfer.current) {
+      wavesurfer.current.stop();
     }
-  }, [isRecording]);
+    if (mediaStream.current) {
+      const tracks = mediaStream.current.getTracks(); // Get all tracks from the stream
+      tracks.forEach(track => track.stop()); // Stop each track
+      mediaStream.current = null; // Clear the stored stream
+    }
+  };
 
   return (
     <div>
-      <h1>Real-time Audio Streamer with Metronome</h1>
-      <button onClick={startRecording} disabled={metronomeActive || isRecording}>
-        {metronomeActive ? 'Metronome Active' : (isRecording ? 'Stop Recording' : 'Start Recording')}
+      <h1>Real-time Audio Visualizer</h1>
+      <button onClick={isRecording ? stopRecording : startRecording}>
+        {isRecording ? 'Stop Recording' : 'Start Recording'}
       </button>
-      <div id="waveform" ref={waveformRef}></div>
-      <p>Status: {isRecording ? 'Recording' : (metronomeActive ? 'Waiting: Metronome active' : 'Not Recording')}</p>
+      <div id="waveform" ref={waveformRef} style={{ width: '100%', height: '100px', border: '1px solid black' }}></div>
+      <p>Status: {isRecording ? 'Recording' : 'Not Recording'}</p>
     </div>
   );
 };
