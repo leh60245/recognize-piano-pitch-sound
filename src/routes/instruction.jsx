@@ -3,6 +3,49 @@
 import "../App.css";
 import React, { useState, useEffect, useRef } from 'react';
 import WaveSurfer from 'wavesurfer.js';
+import React, { useState, useEffect } from 'react';
+
+const SheetMusicSelector = () => {
+  const [images, setImages] = useState([]);
+  const [selectedImage, setSelectedImage] = useState('');
+
+  // Fetch image list from JSON file
+  useEffect(() => {
+    fetch('./sheet-image-path.json')  // Adjust the path as necessary
+      .then(response => response.json())
+      .then(data => setImages(data.images))
+      .catch(error => console.error('Error loading image list:', error));
+  }, []);
+
+  // Handle image selection
+  const handleSelection = (filename) => {
+    import(`./sheet/${filename}`)
+      .then(image => setSelectedImage(image.default))
+      .catch(error => console.error('Error loading image:', error));
+  };
+
+  return (
+    <div>
+      <h1>Select Sheet Music</h1>
+      {images.length > 0 ? (
+        <ul>
+          {images.map((filename, index) => (
+            <li key={index} style={{ cursor: 'pointer' }} onClick={() => handleSelection(filename)}>
+              {filename.split('.')[0]}  {/* Display name without file extension */}
+            </li>
+          ))}
+        </ul>
+      ) : <p>Loading images...</p>}
+      {selectedImage && (
+        <div>
+          <img src={selectedImage} alt="Selected Sheet Music" style={{ width: '100%', height: 'auto' }} />
+        </div>
+      )}
+    </div>
+  );
+};
+
+
 
 const AudioStreamer = () => {
   const [isRecording, setIsRecording] = useState(false);
