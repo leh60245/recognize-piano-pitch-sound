@@ -3,23 +3,20 @@
 import "../App.css";
 import React, { useState, useEffect, useRef } from 'react';
 import WaveSurfer from 'wavesurfer.js';
-import React, { useState, useEffect } from 'react';
+import sheetImagePath from "./sheet-image-path.json";
+const sheetImagesPath = sheetImagePath.images; // keypoints의 한국 이름
 
 const SheetMusicSelector = () => {
   const [images, setImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState('');
 
-  // Fetch image list from JSON file
   useEffect(() => {
-    fetch('./sheet-image-path.json')  // Adjust the path as necessary
-      .then(response => response.json())
-      .then(data => setImages(data.images))
-      .catch(error => console.error('Error loading image list:', error));
-  }, []);
+    setImages(sheetImagesPath)
+  })
 
   // Handle image selection
   const handleSelection = (filename) => {
-    import(`./sheet/${filename}`)
+    import(`../src/sheet/${filename}`)
       .then(image => setSelectedImage(image.default))
       .catch(error => console.error('Error loading image:', error));
   };
@@ -115,7 +112,9 @@ const AudioStreamer = () => {
       </button>
       <div id="waveform" ref={waveformRef} style={{ width: '100%', height: '100px', border: '1px solid black' }}></div>
       <p>Status: {isRecording ? 'Recording' : 'Not Recording'}</p>
+      <SheetMusicSelector />
     </div>
+
   );
 };
 
