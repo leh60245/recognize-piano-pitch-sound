@@ -6,6 +6,27 @@ import WaveSurfer from 'wavesurfer.js';
 import sheetImagePath from "./sheet-image-path.json";
 const sheetImagesPath = sheetImagePath.images; // keypoints의 한국 이름
 
+const Collapsible = ({ title, children }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggle = () => {
+    setIsOpen(!isOpen);
+  };
+
+  return (
+    <div>
+      <button onClick={toggle} style={{ marginBottom: '5px', cursor: 'pointer' }}>
+        {title}
+      </button>
+      {isOpen && (
+        <div style={{ margin: '5px 0' }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const SheetMusicSelector = () => {
   const [images, setImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState('');
@@ -24,15 +45,15 @@ const SheetMusicSelector = () => {
   return (
     <div>
       <h1>Select Sheet Music</h1>
-      {images.length > 0 ? (
+      <Collapsible title="View Sheet Music List">
         <ul>
           {images.map((filename, index) => (
-            <li key={index} style={{ cursor: 'pointer' }} onClick={() => handleSelection(filename)}>
-              {filename.split('.')[0]}  {/* Display name without file extension */}
+            <li key={index} style={{ cursor: 'pointer', listStyleType: 'none' }} onClick={() => handleSelection(filename)}>
+              {filename.split('.')[0]}
             </li>
           ))}
         </ul>
-      ) : <p>Loading images...</p>}
+      </Collapsible>
       {selectedImage && (
         <div>
           <img src={selectedImage} alt="Selected Sheet Music" style={{ width: '100%', height: 'auto' }} />
