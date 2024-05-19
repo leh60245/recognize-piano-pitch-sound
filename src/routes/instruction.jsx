@@ -1,10 +1,7 @@
-// import React from "react";
-
-import "../App.css";
 import React, { useState, useEffect, useRef } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import sheetImagePath from "./sheet-image-path.json";
-const sheetImagesPath = sheetImagePath.images; // keypoints의 한국 이름
+const sheetImagesPath = sheetImagePath.images;
 
 const Collapsible = ({ title, children }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,13 +24,13 @@ const Collapsible = ({ title, children }) => {
   );
 };
 
-const SheetMusicSelector = () => {
+const SheetMusicSelector = ({ imageWidth = '100%' }) => {
   const [images, setImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState('');
 
   useEffect(() => {
     setImages(sheetImagesPath)
-  })
+  }, []); // Add dependency array to prevent infinite loop
 
   // Handle image selection
   const handleSelection = (filename) => {
@@ -56,14 +53,12 @@ const SheetMusicSelector = () => {
       </Collapsible>
       {selectedImage && (
         <div>
-          <img src={selectedImage} alt="Selected Sheet Music" style={{ width: '100%', height: 'auto' }} />
+          <img src={selectedImage} alt="Selected Sheet Music" style={{ width: imageWidth, height: 'auto' }} />
         </div>
       )}
     </div>
   );
 };
-
-
 
 const AudioStreamer = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -133,9 +128,8 @@ const AudioStreamer = () => {
       </button>
       <div id="waveform" ref={waveformRef} style={{ width: '100%', height: '100px', border: '1px solid black' }}></div>
       <p>Status: {isRecording ? 'Recording' : 'Not Recording'}</p>
-      <SheetMusicSelector />
+      <SheetMusicSelector imageWidth="80%" />
     </div>
-
   );
 };
 

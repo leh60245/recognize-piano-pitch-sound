@@ -15,9 +15,8 @@ import {
 import Exercise from "./routes/exercise";
 import Setting from "./routes/setting";
 import Instruction from "./routes/instruction";
-
-// Utils
-import { getSpeech } from "./utils/getSpeech";
+import SheetMusicSelectorPage from './routes/SheetMusicSelectorPage';
+import AudioStreamer from './routes/AudioStreamer';
 
 // img
 import exerciseImg from "./src/stretching-exercises.png";
@@ -49,47 +48,23 @@ function Home({ props }) {
       link: "/instruction",
       img: instruction,
       icorn: "_Icon_instruction",
-      text: "사용 설명서",
+      text: "설정",
+    },
+    {
+      id: "sheetMusicSelectorPage",
+      link: "/sheetMusicSelectorPage",
+      img: instruction,
+      icorn: "_Icon_instruction",
+      text: "악보 연습",
     },
   ];
 
-  // 마우스가 메뉴 위에 있을 때 음성 재생
-  const handleMouseEnter = (text) => {
-    getSpeech(text);
-    setHover(text);
-  };
-
-  // 마우스가 메뉴에서 벗어날 때 음성 중단
-  const handleMouseLeave = () => {
-    if (window.speechSynthesis && window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
-    }
-    setHover("");
-  };
-
-  // 포커스가 메뉴 위에 있을 때 음성 재생
-  const handleFocus = (text) => {
-    getSpeech(text);
-    setHover(text);
-  };
-
-  // 포커스가 메뉴에서 벗어날 때 음성 중단
-  const handleBlur = () => {
-    if (window.speechSynthesis && window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
-    }
-    setHover("");
-  };
 
   const linkMenuList = menuList.map((menu) => (
     <Link
       key={menu.id}
       to={menu.link}
       style={{ textDecoration: "none" }}
-      onMouseEnter={() => handleMouseEnter(menu.text)}
-      onMouseLeave={handleMouseLeave}
-      onFocus={() => handleFocus(menu.text)}
-      onBlur={handleBlur}
     >
       <Box w="100%" h="100%" border="20px" backgroundColor="#009E73">
         <Card maxW={{ base: "100%", sm: "200px" }}>
@@ -108,15 +83,6 @@ function Home({ props }) {
     console.log(hover);
   }, [hover]);
 
-  useEffect(() => {
-    // 컴포넌트가 언마운트될 때 호출되는 정리 함수
-    return () => {
-      if (window.speechSynthesis && window.speechSynthesis.speaking) {
-        // 현재 재생 중인 음성이 있으면 중단
-        window.speechSynthesis.cancel();
-      }
-    };
-  }, []);
 
   return (
     <Center>
@@ -131,6 +97,8 @@ function App() {
     { path: "/exercise", element: <Exercise /> },
     { path: "/setting", element: <Setting /> },
     { path: "/instruction", element: <Instruction /> },
+    { path: "/sheetMusicSelectorPage", element: <SheetMusicSelectorPage /> },
+    { path: "/audiostreamer", element: <AudioStreamer /> },
   ]);
 
   return <div className="App">{routes}</div>;
