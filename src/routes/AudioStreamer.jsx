@@ -47,7 +47,7 @@ const AudioStreamer = () => {
 
   const startCountdown = (resume = false) => {
     setIsCountingDown(true);
-    setCountdown(4);
+    setCountdown(1);
 
     const countdownInterval = setInterval(() => {
       setCountdown(prevCountdown => {
@@ -88,11 +88,15 @@ const AudioStreamer = () => {
         const intervalTime = 1000 / 60; // 60 fps
         let currentTimeLocal = resumeTime;
         sliderIntervalRef.current = setInterval(() => {
-          currentTimeLocal += intervalTime / 1000;
-          setCurrentTime(currentTimeLocal);
-          setSliderPosition((currentTimeLocal / duration) * 100);
-          if (currentTimeLocal >= duration) {
-            clearInterval(sliderIntervalRef.current);
+          if (!isPaused) {
+            currentTimeLocal += intervalTime / 1000;
+            setCurrentTime(currentTimeLocal);
+            let position = (currentTimeLocal / duration) * 100;
+            if (position >= 100) {
+              position = 0;
+              currentTimeLocal = 0;
+            }
+            setSliderPosition(position);
           }
         }, intervalTime);
       })
