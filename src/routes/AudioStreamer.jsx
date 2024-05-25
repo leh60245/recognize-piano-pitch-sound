@@ -1,19 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import WaveSurfer from 'wavesurfer.js';
-import { Box, Button, Center, Image, Text, Flex, Progress } from '@chakra-ui/react';
+import { Box, Button, Center, Image, Text, Flex } from '@chakra-ui/react';
 
 const AudioStreamer = () => {
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [countdown, setCountdown] = useState(4);
   const [sliderPosition, setSliderPosition] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const mediaStream = useRef(null);
   const location = useLocation();
   const [selectedImage, setSelectedImage] = useState('');
   const slideBarRef = useRef(null);
+  const sliderIntervalRef = useRef(null);
 
   useEffect(() => {
     if (location.state && location.state.selectedSheetMusic) {
@@ -42,7 +45,7 @@ const AudioStreamer = () => {
     };
   }, []);
 
-  const startRecording = () => {
+  const startCountdown = (resume = false) => {
     setIsCountingDown(true);
     setCountdown(4);
 
@@ -51,16 +54,21 @@ const AudioStreamer = () => {
         if (prevCountdown === 1) {
           clearInterval(countdownInterval);
           setIsCountingDown(false);
-          beginRecording();
+          if (resume) {
+            beginRecording(currentTime);
+          } else {
+            beginRecording();
+          }
         }
         return prevCountdown - 1;
       });
     }, 1000);
   };
 
-  const beginRecording = () => {
+  const beginRecording = (resumeTime = 0) => {
     setIsRecording(true);
-    setSliderPosition(0);
+    setIsPaused(false);
+    setSliderPosition((resumeTime / 30) * 100); // Set initial position based on resume time
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
         mediaStream.current = stream;
@@ -78,12 +86,13 @@ const AudioStreamer = () => {
         // Start the slider animation
         const duration = 30; // Duration of the song in seconds, you can adjust this
         const intervalTime = 1000 / 60; // 60 fps
-        let currentTime = 0;
-        const sliderInterval = setInterval(() => {
-          currentTime += intervalTime / 1000;
-          setSliderPosition((currentTime / duration) * 100);
-          if (currentTime >= duration) {
-            clearInterval(sliderInterval);
+        let currentTimeLocal = resumeTime;
+        sliderIntervalRef.current = setInterval(() => {
+          currentTimeLocal += intervalTime / 1000;
+          setCurrentTime(currentTimeLocal);
+          setSliderPosition((currentTimeLocal / duration) * 100);
+          if (currentTimeLocal >= duration) {
+            clearInterval(sliderIntervalRef.current);
           }
         }, intervalTime);
       })
@@ -93,10 +102,14 @@ const AudioStreamer = () => {
       });
   };
 
-  const stopRecording = () => {
+  const pauseRecording = () => {
+    setIsPaused(true);
     setIsRecording(false);
     if (wavesurfer.current) {
-      wavesurfer.current.empty();
+      wavesurfer.current.pause();
+    }
+    if (sliderIntervalRef.current) {
+      clearInterval(sliderIntervalRef.current);
     }
     if (mediaStream.current) {
       const tracks = mediaStream.current.getTracks();
@@ -105,24 +118,53 @@ const AudioStreamer = () => {
     }
   };
 
+  const stopRecording = () => {
+    setIsRecording(false);
+    setIsPaused(false);
+    setCurrentTime(0);
+    if (wavesurfer.current) {
+      wavesurfer.current.stop();
+    }
+    if (mediaStream.current) {
+      const tracks = mediaStream.current.getTracks();
+      tracks.forEach(track => track.stop());
+      mediaStream.current = null;
+    }
+    if (sliderIntervalRef.current) {
+      clearInterval(sliderIntervalRef.current);
+    }
+    setSliderPosition(0);
+  };
+
   return (
     <Center flexDirection="column">
       <Text fontSize="2xl">Real-time Audio Visualizer</Text>
-      <Button onClick={isRecording ? stopRecording : startRecording} my={4}>
-        {isRecording ? 'Stop Recording' : (isCountingDown ? 'Recording in...' : 'Start Recording')}
-      </Button>
+      <Flex my={4}>
+        {!isRecording && !isCountingDown && !isPaused && (
+          <Button onClick={() => startCountdown(false)} mx={2}>Start Recording</Button>
+        )}
+        {isRecording && !isPaused && (
+          <Button onClick={pauseRecording} mx={2}>Pause Recording</Button>
+        )}
+        {!isRecording && !isCountingDown && isPaused && (
+          <Button onClick={() => startCountdown(true)} mx={2}>Resume Recording</Button>
+        )}
+        {(isRecording || isPaused) && (
+          <Button onClick={stopRecording} mx={2}>Stop Recording</Button>
+        )}
+      </Flex>
       {isCountingDown && (
         <Text fontSize="4xl" my={4}>{countdown}</Text>
       )}
       <Box id="waveform" ref={waveformRef} w="100%" h="100px" border="1px solid black" />
-      <Text>Status: {isRecording ? 'Recording' : 'Not Recording'}</Text>
+      <Text>Status: {isCountingDown ? 'Counting Down' : isRecording ? 'Recording' : isPaused ? 'Paused' : 'Not Recording'}</Text>
       <Link to="/select-sheet-music">
         <Button my={4}>Select Sheet Music</Button>
       </Link>
       {selectedImage && (
         <Box position="relative" w="100%" overflow="hidden">
           <Image src={selectedImage} alt="Selected Sheet Music" w="100%" h="auto" />
-          {isRecording && (
+          {(isRecording || isPaused) && (
             <Box
               ref={slideBarRef}
               position="absolute"
