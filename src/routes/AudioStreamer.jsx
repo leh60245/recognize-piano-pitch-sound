@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import WaveSurfer from 'wavesurfer.js';
-import { Box, Button, Center, Image, Text, Flex } from '@chakra-ui/react';
+import { Box, Button, Center, Image, Text, Flex, Progress } from '@chakra-ui/react';
 
 const AudioStreamer = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [countdown, setCountdown] = useState(4);
+  const [sliderPosition, setSliderPosition] = useState(0);
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const mediaStream = useRef(null);
   const location = useLocation();
   const [selectedImage, setSelectedImage] = useState('');
+  const slideBarRef = useRef(null);
 
   useEffect(() => {
     if (location.state && location.state.selectedSheetMusic) {
@@ -58,6 +60,7 @@ const AudioStreamer = () => {
 
   const beginRecording = () => {
     setIsRecording(true);
+    setSliderPosition(0);
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
         mediaStream.current = stream;
@@ -71,6 +74,18 @@ const AudioStreamer = () => {
 
         // Load the media element into WaveSurfer
         wavesurfer.current.load(mediaElement);
+
+        // Start the slider animation
+        const duration = 30; // Duration of the song in seconds, you can adjust this
+        const intervalTime = 1000 / 60; // 60 fps
+        let currentTime = 0;
+        const sliderInterval = setInterval(() => {
+          currentTime += intervalTime / 1000;
+          setSliderPosition((currentTime / duration) * 100);
+          if (currentTime >= duration) {
+            clearInterval(sliderInterval);
+          }
+        }, intervalTime);
       })
       .catch(err => {
         console.error("Error accessing the microphone:", err);
@@ -101,12 +116,24 @@ const AudioStreamer = () => {
       )}
       <Box id="waveform" ref={waveformRef} w="100%" h="100px" border="1px solid black" />
       <Text>Status: {isRecording ? 'Recording' : 'Not Recording'}</Text>
+      <Link to="/select-sheet-music">
+        <Button my={4}>Select Sheet Music</Button>
+      </Link>
       {selectedImage && (
-        <Flex w="100%" justifyContent="flex-end" overflow="hidden">
-          <Box w="80%" maxW="100%">
-            <Image src={selectedImage} alt="Selected Sheet Music" w="100%" h="auto" />
-          </Box>
-        </Flex>
+        <Box position="relative" w="100%" overflow="hidden">
+          <Image src={selectedImage} alt="Selected Sheet Music" w="100%" h="auto" />
+          {isRecording && (
+            <Box
+              ref={slideBarRef}
+              position="absolute"
+              top="0"
+              bottom="0"
+              width="2px"
+              bg="red"
+              style={{ left: `${sliderPosition}%` }}
+            />
+          )}
+        </Box>
       )}
     </Center>
   );
