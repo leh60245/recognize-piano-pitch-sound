@@ -5,6 +5,8 @@ import { Box, Button, Center, Image, Text, Flex } from '@chakra-ui/react';
 
 const AudioStreamer = () => {
   const [isRecording, setIsRecording] = useState(false);
+  const [isCountingDown, setIsCountingDown] = useState(false);
+  const [countdown, setCountdown] = useState(4);
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const mediaStream = useRef(null);
@@ -39,6 +41,22 @@ const AudioStreamer = () => {
   }, []);
 
   const startRecording = () => {
+    setIsCountingDown(true);
+    setCountdown(4);
+
+    const countdownInterval = setInterval(() => {
+      setCountdown(prevCountdown => {
+        if (prevCountdown === 1) {
+          clearInterval(countdownInterval);
+          setIsCountingDown(false);
+          beginRecording();
+        }
+        return prevCountdown - 1;
+      });
+    }, 1000);
+  };
+
+  const beginRecording = () => {
     setIsRecording(true);
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
@@ -76,8 +94,11 @@ const AudioStreamer = () => {
     <Center flexDirection="column">
       <Text fontSize="2xl">Real-time Audio Visualizer</Text>
       <Button onClick={isRecording ? stopRecording : startRecording} my={4}>
-        {isRecording ? 'Stop Recording' : 'Start Recording'}
+        {isRecording ? 'Stop Recording' : (isCountingDown ? 'Recording in...' : 'Start Recording')}
       </Button>
+      {isCountingDown && (
+        <Text fontSize="4xl" my={4}>{countdown}</Text>
+      )}
       <Box id="waveform" ref={waveformRef} w="100%" h="100px" border="1px solid black" />
       <Text>Status: {isRecording ? 'Recording' : 'Not Recording'}</Text>
       {selectedImage && (
