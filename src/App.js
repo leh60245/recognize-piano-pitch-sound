@@ -7,21 +7,26 @@ import {
   Card,
   CardHeader,
   CardBody,
-  HStack,
+    HStack,
+  VStack,
   Center,
 } from "@chakra-ui/react";
 
 // Routes
-import Exercise from "./routes/exercise";
+
 import Setting from "./routes/setting";
 import Instruction from "./routes/instruction";
 import SheetMusicSelectorPage from './routes/SheetMusicSelectorPage';
 import AudioStreamer from './routes/AudioStreamer';
+import SuiSou from './routes/SuiSou';
 
 // img
 import exerciseImg from "./src/stretching-exercises.png";
 import settingImg from "./src/settings.png";
 import instruction from "./src/guidebook.png";
+import logoImg from "./src/BPL.png"
+import SuiSouImg from "./src/suisou.png"
+import sheetmenuIcon from "./src/sheetmenuIcon.png"
 
 import "./App.css";
 
@@ -30,32 +35,32 @@ function Home({ props }) {
 
   const menuList = [
     {
-      id: "exercise",
-      link: "/exercise",
-      img: exerciseImg,
-      icorn: "_Icon_exercise",
-      text: "오늘의 운동 시작",
-    },
+       id: "sheetMusicSelectorPage",
+       link: "/sheetMusicSelectorPage",
+          img: sheetmenuIcon,
+       icorn: "_Icon_instruction",
+       text: "악보 연습",
+      },
+    {
+       id: "Suisou",
+       link: "/Suisou",
+        img: SuiSouImg,
+       icorn: "_Icon_setting",
+       text: "오늘의 추천 악보",
+      },
     {
       id: "setting",
       link: "/setting",
       img: settingImg,
       icorn: "_Icon_setting",
       text: "개인 설정",
-    },
+      },
     {
       id: "instruction",
       link: "/instruction",
       img: instruction,
       icorn: "_Icon_instruction",
       text: "설정",
-    },
-    {
-      id: "sheetMusicSelectorPage",
-      link: "/sheetMusicSelectorPage",
-      img: instruction,
-      icorn: "_Icon_instruction",
-      text: "악보 연습",
     },
   ];
 
@@ -66,10 +71,10 @@ function Home({ props }) {
       to={menu.link}
       style={{ textDecoration: "none" }}
     >
-      <Box w="100%" h="100%" border="20px" backgroundColor="#009E73">
-        <Card maxW={{ base: "100%", sm: "200px" }}>
+          <Box maxW='sm' borderWidth="10px" borderRadius='lg' border='1px' borderColor='gray.200' >
+        <Card maxW={{ base: "100%", sm: "100px" }}>
           <CardHeader>
-            <Image w="100%" h="100%" id="image" src={menu.img} />
+            <Image w="50%" h="100%" id="image" src={menu.img} />
           </CardHeader>
           <CardBody>
             <Text fontSize="50px">{menu.text}</Text>
@@ -84,21 +89,30 @@ function Home({ props }) {
   }, [hover]);
 
 
-  return (
+    return (
+        <VStack>
+            <Image
+                w="50%"
+                objectFit='cover'
+                src={logoImg}
+                alt='Dan Abramov'
+            />
     <Center>
       <HStack>{linkMenuList}</HStack>
-    </Center>
+            </Center>
+            </VStack>
   );
 }
 
 function App() {
   const routes = useRoutes([
     { path: "/", element: <Home /> },
-    { path: "/exercise", element: <Exercise /> },
+    
     { path: "/setting", element: <Setting /> },
     { path: "/instruction", element: <Instruction /> },
     { path: "/sheetMusicSelectorPage", element: <SheetMusicSelectorPage /> },
     { path: "/audiostreamer", element: <AudioStreamer /> },
+    { path: "/SuiSou", element: <SuiSou /> },
   ]);
 
   return <div className="App">{routes}</div>;
