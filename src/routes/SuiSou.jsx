@@ -97,17 +97,36 @@ function SuiSou () {
         setObj(0);
     };
 
+    const audioRef = useRef(null);
+    const [currentTime, setCurrentTime] = useState(0);
+
+    useEffect(() => {
+        const updateTime = () => {
+            setCurrentTime(audioRef.current.currentTime * 1000); // 밀리초 단위로 변환
+        };
+
+        audioRef.current.addEventListener('timeupdate', updateTime);
+
+        return () => {
+            audioRef.current.removeEventListener('timeupdate', updateTime);
+        };
+    }, []);
+
 
    return (
         <Stack spacing={3}>
            <Text fontSize='50px' as='b'>Frere Jaques</Text>
            <Center>
-               <audio
-               controls
-               src={song}>
-               
+               <audio ref={audioRef} controls>
+                   <source src={song} type="audio/mp3" />
                </audio>
+            
+
+
+
            </Center>
+           <p>Current Time: {currentTime} milliseconds</p>
+
            <Center>
            <TestComponent count={TestObj} />
            <div style={{display:'flex'}}>
