@@ -1,106 +1,66 @@
 import React, { useState, useEffect, useRef } from 'react';
-import WaveSurfer from 'wavesurfer.js';
-import sheetImagePath from "./sheet-image-path.json";
-const sheetImagesPath = sheetImagePath.images;
-
-const Collapsible = ({ title, children }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const toggle = () => {
-    setIsOpen(!isOpen);
-  };
-
-  return (
-    <div>
-      <button onClick={toggle} style={{ marginBottom: '5px', cursor: 'pointer' }}>
-        {title}
-      </button>
-      {isOpen && (
-        <div style={{ margin: '5px 0' }}>
-          {children}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const SheetMusicSelector = ({ imageWidth = '100%' }) => {
-  const [images, setImages] = useState([]);
-  const [selectedImage, setSelectedImage] = useState('');
-
-  useEffect(() => {
-    setImages(sheetImagesPath)
-  }, []); // Add dependency array to prevent infinite loop
-
-  // Handle image selection
-  const handleSelection = (filename) => {
-    import(`../src/sheet/${filename}`)
-      .then(image => setSelectedImage(image.default))
-      .catch(error => console.error('Error loading image:', error));
-  };
-
-  return (
-    <div>
-      <h1>Select Sheet Music</h1>
-      <Collapsible title="View Sheet Music List">
-        <ul>
-          {images.map((filename, index) => (
-            <li key={index} style={{ cursor: 'pointer', listStyleType: 'none' }} onClick={() => handleSelection(filename)}>
-              {filename.split('.')[0]}
-            </li>
-          ))}
-        </ul>
-      </Collapsible>
-      {selectedImage && (
-        <div>
-          <img src={selectedImage} alt="Selected Sheet Music" style={{ width: imageWidth, height: 'auto' }} />
-        </div>
-      )}
-    </div>
-  );
-};
 
 const AudioStreamer = () => {
   const [isRecording, setIsRecording] = useState(false);
-  const waveformRef = useRef(null);
-  const wavesurfer = useRef(null);
-  const mediaStream = useRef(null); // Hold the media stream
+  const [isPaused, setIsPaused] = useState(false);
+  const [noteStatus, setNoteStatus] = useState(null); // 추가: 음표 상태를 저장
+  const mediaStream = useRef(null);
+  const webSocket = useRef(null);
+  const mediaRecorder = useRef(null);
 
   useEffect(() => {
-    // Setup the Wavesurfer instance
-    if (waveformRef.current && !wavesurfer.current) {
-      wavesurfer.current = WaveSurfer.create({
-        container: waveformRef.current,
-        waveColor: 'violet',
-        progressColor: 'purple',
-        height: 100,
-        barWidth: 2,
-        responsive: true,
-        backend: 'MediaElement'
-      });
-    }
+    webSocket.current = new WebSocket('ws://localhost:8000/ws/voice/');
+
+    webSocket.current.onopen = () => {
+      console.log('WebSocket connection established');
+    };
+
+    webSocket.current.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+
+    webSocket.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    webSocket.current.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setNoteStatus(data.isCorrect ? 'Correct' : 'Incorrect');
+      if (data.isCorrect) {
+        // 다음 음표로 이동하는 로직을 여기에 추가
+      } else {
+        startRecording(); // 다시 소리를 인식하도록 재시작
+      }
+    };
+
     return () => {
-      if (wavesurfer.current) {
-        wavesurfer.current.destroy();
+      if (webSocket.current) {
+        webSocket.current.close();
       }
     };
   }, []);
 
+  const sendAudioData = (data) => {
+    if (webSocket.current && webSocket.current.readyState === WebSocket.OPEN) {
+      webSocket.current.send(data);
+    }
+  };
+
   const startRecording = () => {
     setIsRecording(true);
+    setIsPaused(false);
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
-        mediaStream.current = stream; // Store the stream globally
-        if (wavesurfer.current) {
-          const audioContext = new AudioContext();
-          const mediaStreamSource = audioContext.createMediaStreamSource(stream);
-          const mediaElement = document.createElement('audio');
-          mediaElement.srcObject = stream;
-          mediaElement.addEventListener('loadedmetadata', () => {
-            mediaElement.play();
-          });
-          wavesurfer.current.load(mediaElement);
-        }
+        mediaStream.current = stream;
+        mediaRecorder.current = new MediaRecorder(stream);
+
+        mediaRecorder.current.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            sendAudioData(event.data);
+          }
+        };
+
+        mediaRecorder.current.start(100); // Collect 100ms chunks of audio
       })
       .catch(err => {
         console.error("Error accessing the microphone:", err);
@@ -108,27 +68,49 @@ const AudioStreamer = () => {
       });
   };
 
+  const pauseRecording = () => {
+    if (mediaRecorder.current && mediaRecorder.current.state === "recording") {
+      mediaRecorder.current.pause();
+      setIsPaused(true);
+    }
+  };
+
+  const resumeRecording = () => {
+    if (mediaRecorder.current && mediaRecorder.current.state === "paused") {
+      mediaRecorder.current.resume();
+      setIsPaused(false);
+    }
+  };
+
   const stopRecording = () => {
     setIsRecording(false);
-    if (wavesurfer.current) {
-      wavesurfer.current.stop();
+    setIsPaused(false);
+    if (mediaRecorder.current) {
+      mediaRecorder.current.stop();
     }
     if (mediaStream.current) {
-      const tracks = mediaStream.current.getTracks(); // Get all tracks from the stream
-      tracks.forEach(track => track.stop()); // Stop each track
-      mediaStream.current = null; // Clear the stored stream
+      const tracks = mediaStream.current.getTracks();
+      tracks.forEach(track => track.stop());
+      mediaStream.current = null;
     }
   };
 
   return (
     <div>
-      <h1>Real-time Audio Visualizer</h1>
-      <button onClick={isRecording ? stopRecording : startRecording}>
-        {isRecording ? 'Stop Recording' : 'Start Recording'}
-      </button>
-      <div id="waveform" ref={waveformRef} style={{ width: '100%', height: '100px', border: '1px solid black' }}></div>
-      <p>Status: {isRecording ? 'Recording' : 'Not Recording'}</p>
-      <SheetMusicSelector imageWidth="80%" />
+      <h1>Real-time Audio Streamer</h1>
+      {!isRecording && <button onClick={startRecording}>Start Recording</button>}
+      {isRecording && !isPaused && <button onClick={pauseRecording}>Pause Recording</button>}
+      {isPaused && <button onClick={resumeRecording}>Resume Recording</button>}
+      {isRecording && <button onClick={stopRecording}>Stop Recording</button>}
+      <p>Status: {isRecording ? (isPaused ? 'Paused' : 'Recording') : 'Not Recording'}</p>
+      <p>Note Status: {noteStatus}</p>
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        <img
+          src="path/to/your/sheet_music_image.png"
+          alt="Sheet Music"
+          style={{ width: '80%' }}
+        />
+      </div>
     </div>
   );
 };
