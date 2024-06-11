@@ -12,52 +12,56 @@ import {
 } from "@chakra-ui/react";
 
 // Routes
-import Exercise from "./routes/exercise";
+
 import Setting from "./routes/setting";
 import Instruction from "./routes/instruction";
 import SheetMusicSelectorPage from './routes/SheetMusicSelectorPage';
 import AudioStreamer from './routes/AudioStreamer';
+import SuiSou from './routes/SuiSou';
 
 // img
 import exerciseImg from "./src/stretching-exercises.png";
 import settingImg from "./src/settings.png";
 import instruction from "./src/guidebook.png";
+import logoImg from "./src/BPL.png"
+import SuiSouImg from "./src/suisou.png"
+import sheetmenuIcon from "./src/sheetmenuIcon.png"
 
 import "./App.css";
 
 function Home({ props }) {
   const [hover, setHover] = useState("");
 
-  const menuList = [
-    {
-      id: "exercise",
-      link: "/exercise",
-      img: exerciseImg,
-      icorn: "_Icon_exercise",
-      text: "오늘의 운동 시작",
-    },
-    {
-      id: "setting",
-      link: "/setting",
-      img: settingImg,
-      icorn: "_Icon_setting",
-      text: "개인 설정",
-    },
-    {
-      id: "instruction",
-      link: "/instruction",
-      img: instruction,
-      icorn: "_Icon_instruction",
-      text: "설정",
-    },
-    {
-      id: "sheetMusicSelectorPage",
-      link: "/sheetMusicSelectorPage",
-      img: instruction,
-      icorn: "_Icon_instruction",
-      text: "악보 연습",
-    },
-  ];
+    const menuList = [
+        {
+            id: "sheetMusicSelectorPage",
+            link: "/sheetMusicSelectorPage",
+            img: sheetmenuIcon,
+            icorn: "_Icon_instruction",
+            text: "악보 연습",
+        },
+        {
+            id: "Suisou",
+            link: "/Suisou",
+            img: SuiSouImg,
+            icorn: "_Icon_setting",
+            text: "오늘의 추천 악보",
+        },
+        {
+            id: "setting",
+            link: "/setting",
+            img: settingImg,
+            icorn: "_Icon_setting",
+            text: "개인 설정",
+        },
+        {
+            id: "instruction",
+            link: "/instruction",
+            img: instruction,
+            icorn: "_Icon_instruction",
+            text: "설정",
+        },
+    ];
 
 
   const linkMenuList = menuList.map((menu) => (
@@ -92,15 +96,15 @@ function Home({ props }) {
 }
 
 function App() {
-  const routes = useRoutes([
-    { path: "/", element: <Home /> },
-    { path: "/exercise", element: <Exercise /> },
-    { path: "/setting", element: <Setting /> },
-    { path: "/instruction", element: <Instruction /> },
-    { path: "/sheetMusicSelectorPage", element: <SheetMusicSelectorPage /> },
-    { path: "/audiostreamer", element: <AudioStreamer /> },
-  ]);
+    const routes = useRoutes([
+        { path: "/", element: <Home /> },
 
+        { path: "/setting", element: <Setting /> },
+        { path: "/instruction", element: <Instruction /> },
+        { path: "/sheetMusicSelectorPage", element: <SheetMusicSelectorPage /> },
+        { path: "/audiostreamer", element: <AudioStreamer /> },
+        { path: "/SuiSou", element: <SuiSou /> },
+    ]);
   return <div className="App">{routes}</div>;
 }
 

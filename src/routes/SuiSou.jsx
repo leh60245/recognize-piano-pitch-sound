@@ -8,7 +8,7 @@ import sheet1 from "../src/FZ1.png";
 import sheet2 from "../src/FZ2.png";
 import barimg from "../src/bar.png";
 import dialTest from "../src/Dial/Online_0.png"
-import { atom, useRecoilState, RecoilRoot } from 'recoil';
+//import { atom, useRecoilState, RecoilRoot } from 'recoil';
 import song from '../src/Frere Jacques.mp3';
 import "./testTypeSuiSou0.css"
 
@@ -19,55 +19,55 @@ import "./testTypeSuiSou0.css"
 const sheetImagesPath = sheetImagePath.images;
 
 
-const playState = atom < Boolean > ({
-    key: 'playState',
-    default: false,
-});
+//const playState = atom < Boolean > ({
+//    key: 'playState',
+//    default: false,
+//});
 
-function AudioPlayer() {
-    const myRef = useRef < HTMLAudioElement > (null);
-    const [play, setPlay] = useRecoilState(playState);
+//function AudioPlayer() {
+//   const myRef = useRef < HTMLAudioElement > (null);
+//    const [play, setPlay] = useRecoilState(playState);
     // 재생
-    const start = () => {
-        if (myRef.current) {
-            myRef.current.play()
-        }
-        setPlay(true);
-    };
+    //const start = () => {
+      //  if (myRef.current) {
+        //    myRef.current.play()
+        //}
+        //setPlay(true);
+    //};
     // 일시 정지
-    const stop = () => {
-        if (myRef.current) {
-            myRef.current.pause()
-        }
-        setPlay(false);
-    };
+    //const stop = () => {
+      //  if (myRef.current) {
+        //    myRef.current.pause()
+        //}
+        //setPlay(false);
+    //};
 
-    useEffect(() => {
-        if (!myRef.current) return;
-        if (play) {
-            myRef.current.play();
-        } else myRef.current.pause();
-    }, [play]);
+    //useEffect(() => {
+      //  if (!myRef.current) return;
+        //if (play) {
+          //  myRef.current.play();
+        //} else myRef.current.pause();
+    //}, [play]);
 
-    return (
-        <>
-            <h1>AudioPlayer</h1>
-            <audio ref={myRef} src={song} controls loop></audio>
-            <br />
-            <br />
-            {play ?
+    //return (
+      //  <>
+        //    <h1>AudioPlayer</h1>
+          //  <audio ref={myRef} src={song} controls loop></audio>
+            //<br />
+            //<br />
+            //{play ?
                 // 일시정지 버튼
-                (<button onClick={stop}>
-                    일시정지
-                </button>) :
+             //   (<button onClick={stop}>
+               //     일시정지
+                //</button>) :
                 // 재생 버튼
-                (<button onClick={start}>
-                    재생
-                </button>)
-            }
-        </>
-    )
-}
+                //(<button onClick={start}>
+                  //  재생
+                //</button>)
+            //}
+        //</>
+    //)
+//}
 
 function TestComponent({count}) {
     return count>=10    ? <div>0:{count}</div> : <div>0:0{count}    </div>;
