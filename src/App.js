@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { useRoutes, Link } from "react-router-dom";
 import {
-  Image,
-  Box,
-  Text,
-  Card,
-  CardHeader,
-  CardBody,
-  HStack,
-  Center,
+    Image,
+    Box,
+    Text,
+    Card,
+    CardHeader,
+    CardBody,
+    HStack,
+    VStack,
+    Center,
 } from "@chakra-ui/react";
 
 // Routes
@@ -30,7 +31,7 @@ import sheetmenuIcon from "./src/sheetmenuIcon.png"
 import "./App.css";
 
 function Home({ props }) {
-  const [hover, setHover] = useState("");
+    const [hover, setHover] = useState("");
 
     const menuList = [
         {
@@ -64,35 +65,43 @@ function Home({ props }) {
     ];
 
 
-  const linkMenuList = menuList.map((menu) => (
-    <Link
-      key={menu.id}
-      to={menu.link}
-      style={{ textDecoration: "none" }}
-    >
-      <Box w="100%" h="100%" border="20px" backgroundColor="#009E73">
-        <Card maxW={{ base: "100%", sm: "200px" }}>
-          <CardHeader>
-            <Image w="100%" h="100%" id="image" src={menu.img} />
-          </CardHeader>
-          <CardBody>
-            <Text fontSize="50px">{menu.text}</Text>
-          </CardBody>
-        </Card>
-      </Box>
-    </Link>
-  ));
+    const linkMenuList = menuList.map((menu) => (
+        <Link
+            key={menu.id}
+            to={menu.link}
+            style={{ textDecoration: "none" }}
+        >
+            <Box maxW='sm' borderWidth="10px" borderRadius='lg' border='1px' borderColor='gray.200' >
+                <Card maxW={{ base: "100%", sm: "100px" }}>
+                    <CardHeader>
+                        <Image w="50%" h="100%" id="image" src={menu.img} />
+                    </CardHeader>
+                    <CardBody>
+                        <Text fontSize="50px">{menu.text}</Text>
+                    </CardBody>
+                </Card>
+            </Box>
+        </Link>
+    ));
 
-  useEffect(() => {
-    console.log(hover);
-  }, [hover]);
+    useEffect(() => {
+        console.log(hover);
+    }, [hover]);
 
 
-  return (
-    <Center>
-      <HStack>{linkMenuList}</HStack>
-    </Center>
-  );
+    return (
+        <VStack>
+            <Image
+                w="50%"
+                objectFit='cover'
+                src={logoImg}
+                alt='Dan Abramov'
+            />
+            <Center>
+                <HStack>{linkMenuList}</HStack>
+            </Center>
+        </VStack>
+    );
 }
 
 function App() {
@@ -105,7 +114,8 @@ function App() {
         { path: "/audiostreamer", element: <AudioStreamer /> },
         { path: "/SuiSou", element: <SuiSou /> },
     ]);
-  return <div className="App">{routes}</div>;
+
+    return <div className="App">{routes}</div>;
 }
 
 export default App;

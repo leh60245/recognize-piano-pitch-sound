@@ -109,8 +109,8 @@ function SuiSou () {
 
 
     function frzqDial(suisouTime) {
-        var suiKatSou = 0;
-        if (suisouTime > 3.7) { suiKatSou = parseInt((suisouTime - 3.7) / (0.1)) % 4; }
+        var suiKatSou = 1;
+        if (suisouTime > 3.7) { suiKatSou = parseInt((suisouTime - 3.7) / (0.2)) % 4; }
         else {
             suiKatSou = 0;
         }
