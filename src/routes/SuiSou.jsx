@@ -8,6 +8,10 @@ import sheet1 from "../src/FZ1.png";
 import sheet2 from "../src/FZ2.png";
 import barimg from "../src/bar.png";
 import dialTest from "../src/Dial/Online_0.png"
+import dialOnline1 from "../src/Dial/Online_1.png"
+import dialOnline2 from "../src/Dial/Online_2.png"
+import dialOnline3 from "../src/Dial/Online_3.png"
+import dialOnline4 from "../src/Dial/Online_4.png"
 //import { atom, useRecoilState, RecoilRoot } from 'recoil';
 import song from '../src/Frere Jacques.mp3';
 import "./testTypeSuiSou0.css"
@@ -99,14 +103,67 @@ function SuiSou () {
     //오디오 재생 구현부
     const audioRef = useRef(null);
     const [currentTime, setCurrentTime] = useState(0);
-    const [progressBarLeft, setProgressBarLeft] = useState(0);
+    const [progressBarLeft, setProgressBarLeft] = useState(0);//재생바 왼쪽오른쪽
+    const [progressBarTop, setProgressBarTop] = useState(0); //재생바 위아래
+    const [dialimageSrc, setdialimageSrc] = useState('/images/Online_0.png');
+
+
+    function frzqDial(suisouTime) {
+        var suiKatSou = 0;
+        if (suisouTime > 3.7) { suiKatSou = parseInt((suisouTime - 3.7) / (0.1)) % 4; }
+        else {
+            suiKatSou = 0;
+        }
+        console.log(suiKatSou);
+        return ('/images/Online_' + suiKatSou + '.png');
+    }
+
+    function frzqXY(suisouTime) {
+        var suiKatSou = 0;
+        if (suisouTime < 3.5) {
+            suiKatSou = -600;
+        }
+        else if (suisouTime < 5.8) {
+            suiKatSou = -550 + ((suisouTime-3.5)/(5.8-3.5))*(545-228);
+        }
+        else if (suisouTime < 8.6) {
+            suiKatSou = -550 + (545 - 228)+ ((suisouTime - 5.8) / (8.6 - 5.8)) * (861 - 545);
+        }
+        else if (suisouTime < 10.7) {
+            suiKatSou = -550 + (861 - 228)+ ((suisouTime - 8.6) / (10.7 - 8.6)) * (1141 - 861);
+        }
+        else if (suisouTime < 13.3) {
+            suiKatSou = -550 + (1141 - 228) + ((suisouTime - 10.7) / (5.8 - 3.5)) * (1141 - 861);
+        }
+
+
+
+
+        else {
+            suiKatSou = -500 + suisouTime;
+        }
+        return suiKatSou;
+    }
+
 
     useEffect(() => {
         const updateTime = () => {
             setCurrentTime(audioRef.current.currentTime * 1000); // 밀리초 단위로 변환
 
-            const progressBarLeft = (audioRef.current.currentTime * 1000 / audioRef.current.duration) * 2- 600; // 재생 시간에 따라 위치계산
+            //const progressBarLeft = (audioRef.current.currentTime * 1000 / audioRef.current.duration) * 2 - 600; // 재생 시간에 따라 위치계산: 높이의 경우 0,260
+            const progressBarLeft = frzqXY(audioRef.current.currentTime);
             setProgressBarLeft(progressBarLeft);
+
+            setdialimageSrc(frzqDial(audioRef.current.currentTime));
+
+            if (audioRef.current.currentTime > 13.3) {
+                setProgressBarTop(260);
+            }
+            else {
+                setProgressBarTop(0);
+            }
+
+
         };
 
         
@@ -147,7 +204,7 @@ function SuiSou () {
                <Image
                    w="20%"
                    objectFit='cover'
-                   src={dialTest}
+                   src={dialimageSrc}
                    alt='SuiSou'
                />
                <VStack>
@@ -155,7 +212,7 @@ function SuiSou () {
                        <div class="image">
                            <img src={sheet1} alt='SuiSou1'/> 
                                </div>
-                       <div class="bar" style={{ left: progressBarLeft + 'px' }} >
+                       <div class="bar" style={{ left: progressBarLeft + 'px', top: progressBarTop + 'px'}} >
                            <img src={barimg} alt='SuiSou1' />
                            </div>
                        </div>
