@@ -29,9 +29,7 @@ const AudioStreamer = () => {
   const [backendPitch, setBackendPitch] = useState(null); // 백엔드에서 받은 pitch 정보를 저장
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
-  const mediaStream = useRef(null);
-  const audioContext = useRef(null);
-  const scriptProcessor = useRef(null);
+  const mediaRecorder = useRef(null);
   const location = useLocation();
   const [selectedImage, setSelectedImage] = useState('');
   const canvasRef = useRef(null);
@@ -91,34 +89,49 @@ const AudioStreamer = () => {
     }, 1000);
   };
 
-  const sendAudioData = (audioData) => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN && audioData.length > 0) {
-      const audioBlob = new Blob(audioData, { type: 'audio/wav' });
-      ws.current.send(audioBlob);
-    }
+  const createWavHeader = (buffer, dataSize) => {
+    const header = new ArrayBuffer(44);
+    const view = new DataView(header);
+
+    /* RIFF identifier */
+    view.setUint32(0, 1380533830, false);
+    /* file length */
+    view.setUint32(4, 36 + dataSize, true);
+    /* RIFF type */
+    view.setUint32(8, 1463899717, false);
+    /* format chunk identifier */
+    view.setUint32(12, 1718449184, false);
+    /* format chunk length */
+    view.setUint32(16, 16, true);
+    /* sample format (raw) */
+    view.setUint16(20, 1, true);
+    /* channel count */
+    view.setUint16(22, 1, true);
+    /* sample rate */
+    view.setUint32(24, 44100, true);
+    /* byte rate (sample rate * block align) */
+    view.setUint32(28, 44100 * 2, true);
+    /* block align (channel count * bytes per sample) */
+    view.setUint16(32, 2, true);
+    /* bits per sample */
+    view.setUint16(34, 16, true);
+    /* data chunk identifier */
+    view.setUint32(36, 1684108385, false);
+    /* data chunk length */
+    view.setUint32(40, dataSize, true);
+
+    const combined = new Uint8Array(header.byteLength + buffer.byteLength);
+    combined.set(new Uint8Array(header), 0);
+    combined.set(new Uint8Array(buffer), header.byteLength);
+    return combined;
   };
 
-  const createAudioBuffer = async (audioData) => {
-    const buffer = audioContext.current.createBuffer(1, audioData.length, audioContext.current.sampleRate);
-    buffer.copyToChannel(audioData, 0);
-    return buffer;
-  };
-
-  const processAudioData = async (event) => {
-    const audioData = event.inputBuffer.getChannelData(0);
-    sendAudioData(audioData); // 실시간으로 오디오 데이터를 전송
-    if (wavesurfer.current) {
-      const buffer = await createAudioBuffer(audioData);
-      wavesurfer.current.loadDecodedBuffer(buffer);
-    }
-  };
-
-  const beginRecording = () => {
+  const beginRecording = async () => {
     setIsRecording(true);
     setIsPaused(false);
 
     // WebSocket 연결 설정
-    ws.current = new WebSocket('http://127.0.0.1:5000/');
+    ws.current = new WebSocket('ws://localhost:5000');
     ws.current.onopen = () => {
       console.log('WebSocket 연결 성공');
     };
@@ -129,49 +142,46 @@ const AudioStreamer = () => {
       console.log('WebSocket 연결 종료');
     };
 
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
-        mediaStream.current = stream;
-        audioContext.current = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioContext.current.createMediaStreamSource(stream);
-        scriptProcessor.current = audioContext.current.createScriptProcessor(2048, 1, 1);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder.current = new MediaRecorder(stream);
 
-        scriptProcessor.current.onaudioprocess = processAudioData;
+      mediaRecorder.current.ondataavailable = (event) => {
+        if (event.data.size > 0 && ws.current.readyState === WebSocket.OPEN) {
+          event.data.arrayBuffer().then(buffer => {
+            const wavBuffer = createWavHeader(buffer, event.data.size);
+            ws.current.send(wavBuffer);
+          });
+        }
+      };
 
-        source.connect(scriptProcessor.current);
-        scriptProcessor.current.connect(audioContext.current.destination);
-      })
-      .catch(err => {
-        console.error("마이크 접근 오류:", err);
-        setIsRecording(false);
-      });
+      mediaRecorder.current.start(100); // Send data every 100ms
+    } catch (err) {
+      console.error("마이크 접근 오류:", err);
+      setIsRecording(false);
+    }
   };
 
   const pauseRecording = () => {
     setIsPaused(true);
-    scriptProcessor.current?.disconnect();
+    if (mediaRecorder.current) {
+      mediaRecorder.current.pause();
+    }
   };
 
   const resumeRecording = () => {
     setIsPaused(false);
-    const source = audioContext.current.createMediaStreamSource(mediaStream.current);
-    source.connect(scriptProcessor.current);
-    scriptProcessor.current.connect(audioContext.current.destination);
-    scriptProcessor.current.onaudioprocess = processAudioData;
+    if (mediaRecorder.current) {
+      mediaRecorder.current.resume();
+    }
   };
 
   const stopRecording = () => {
     setIsRecording(false);
     setIsPaused(false);
-    if (mediaStream.current) {
-      mediaStream.current.getTracks().forEach(track => track.stop());
-      mediaStream.current = null;
-    }
-    if (scriptProcessor.current) {
-      scriptProcessor.current.disconnect();
-    }
-    if (audioContext.current && audioContext.current.state !== 'closed') {
-      audioContext.current.close().catch(error => console.error('AudioContext 닫기 오류:', error));
+    if (mediaRecorder.current) {
+      mediaRecorder.current.stop();
+      mediaRecorder.current = null;
     }
     if (ws.current) {
       ws.current.close();
