@@ -96,14 +96,22 @@ function SuiSou () {
     const onClickStop = () => {
         setObj(0);
     };
-
+    //오디오 재생 구현부
     const audioRef = useRef(null);
     const [currentTime, setCurrentTime] = useState(0);
+    const [progressBarLeft, setProgressBarLeft] = useState(0);
 
     useEffect(() => {
         const updateTime = () => {
             setCurrentTime(audioRef.current.currentTime * 1000); // 밀리초 단위로 변환
+
+            const progressBarLeft = (audioRef.current.currentTime * 1000 / audioRef.current.duration) * 2- 600; // 재생 시간에 따라 위치계산
+            setProgressBarLeft(progressBarLeft);
         };
+
+        
+
+
 
         audioRef.current.addEventListener('timeupdate', updateTime);
 
@@ -147,7 +155,7 @@ function SuiSou () {
                        <div class="image">
                            <img src={sheet1} alt='SuiSou1'/> 
                                </div>
-                       <div class="bar">
+                       <div class="bar" style={{ left: progressBarLeft + 'px' }} >
                            <img src={barimg} alt='SuiSou1' />
                            </div>
                        </div>
