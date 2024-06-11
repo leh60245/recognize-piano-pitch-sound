@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import WaveSurfer from 'wavesurfer.js';
 import { Box, Button, Center, Image, Text, Flex } from '@chakra-ui/react';
-import axios from 'axios';
 
 const notes = [
   { beat: 1, note: '파', pitch: 'F4', x: 228, y: 137 },
@@ -36,8 +35,8 @@ const AudioStreamer = () => {
   const location = useLocation();
   const [selectedImage, setSelectedImage] = useState('');
   const canvasRef = useRef(null);
-  const chunks = useRef([]);
   const timeoutRef = useRef(null); // 타이머 참조를 위해 useRef 사용
+  const ws = useRef(null); // WebSocket 참조를 위해 useRef 사용
 
   useEffect(() => {
     if (location.state?.selectedSheetMusic) {
@@ -101,12 +100,10 @@ const AudioStreamer = () => {
     }, 1000);
   };
 
-  const sendAudioData = (blob) => {
-    const formData = new FormData();
-    formData.append('audio', blob, 'recording.wav');
-    axios.post('http://your-django-server/api/audio/', formData)
-      .then(response => console.log('서버 응답:', response))
-      .catch(error => console.error('오디오 데이터 전송 오류:', error));
+  const sendAudioData = (audioData) => {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(audioData);
+    }
   };
 
   const createAudioBuffer = async (audioData) => {
@@ -117,6 +114,8 @@ const AudioStreamer = () => {
 
   const processAudioData = async (event) => {
     const audioData = event.inputBuffer.getChannelData(0);
+    const arrayBuffer = audioData.buffer;
+    sendAudioData(arrayBuffer);
     if (wavesurfer.current) {
       const buffer = await createAudioBuffer(audioData);
       wavesurfer.current.loadDecodedBuffer(buffer);
@@ -127,6 +126,16 @@ const AudioStreamer = () => {
     setIsRecording(true);
     setIsPaused(false);
     setCurrentNoteIndex(0); // 녹음 시작 시 인덱스 초기화
+
+    // WebSocket 연결 설정
+    ws.current = new WebSocket('ws://your-websocket-server');
+    ws.current.onopen = () => {
+      console.log('WebSocket 연결 성공');
+    };
+    ws.current.onerror = (error) => {
+      console.error('WebSocket 오류:', error);
+    };
+
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
         mediaStream.current = stream;
@@ -138,16 +147,6 @@ const AudioStreamer = () => {
 
         source.connect(scriptProcessor.current);
         scriptProcessor.current.connect(audioContext.current.destination);
-
-        mediaRecorder.current = new MediaRecorder(stream);
-        mediaRecorder.current.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            const blob = new Blob([event.data], { type: 'audio/wav' });
-            sendAudioData(blob);
-          }
-        };
-
-        mediaRecorder.current.start(1000); // 1초마다 데이터 수집 및 전송
       })
       .catch(err => {
         console.error("마이크 접근 오류:", err);
@@ -157,14 +156,12 @@ const AudioStreamer = () => {
 
   const pauseRecording = () => {
     setIsPaused(true);
-    mediaRecorder.current?.pause();
     scriptProcessor.current?.disconnect();
     clearTimeout(timeoutRef.current); // 일시정지 시 타이머 해제
   };
 
   const resumeRecording = () => {
     setIsPaused(false);
-    mediaRecorder.current?.resume();
     const source = audioContext.current.createMediaStreamSource(mediaStream.current);
     source.connect(scriptProcessor.current);
     scriptProcessor.current.connect(audioContext.current.destination);
@@ -174,9 +171,6 @@ const AudioStreamer = () => {
   const stopRecording = () => {
     setIsRecording(false);
     setIsPaused(false);
-    if (mediaRecorder.current && mediaRecorder.current.state !== 'inactive') {
-      mediaRecorder.current.stop();
-    }
     if (mediaStream.current) {
       mediaStream.current.getTracks().forEach(track => track.stop());
       mediaStream.current = null;
@@ -186,6 +180,9 @@ const AudioStreamer = () => {
     }
     if (audioContext.current && audioContext.current.state !== 'closed') {
       audioContext.current.close().catch(error => console.error('AudioContext 닫기 오류:', error));
+    }
+    if (ws.current) {
+      ws.current.close();
     }
     clearTimeout(timeoutRef.current); // 녹음 중지 시 타이머 해제
   };
