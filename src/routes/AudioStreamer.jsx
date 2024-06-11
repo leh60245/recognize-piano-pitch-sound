@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import WaveSurfer from 'wavesurfer.js';
 import { Box, Button, Center, Image, Text, Flex } from '@chakra-ui/react';
 
@@ -34,6 +34,7 @@ const AudioStreamer = () => {
   const [selectedImage, setSelectedImage] = useState('');
   const canvasRef = useRef(null);
   const ws = useRef(null);
+  const incorrectNotes = useRef([]);
 
   useEffect(() => {
     if (location.state?.selectedSheetMusic) {
@@ -66,9 +67,19 @@ const AudioStreamer = () => {
   useEffect(() => {
     if (ws.current) {
       ws.current.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.pitch) {
-          setBackendPitch(data.pitch);
+        const message = event.data;
+        if (message.startsWith("Recognized notes:")) {
+          const notesData = message.replace("Recognized notes:", "").trim();
+          const correctedData = notesData.replace(/'/g, '"'); // Replace single quotes with double quotes
+          try {
+            const parsedData = JSON.parse(correctedData);
+            if (parsedData.length > 0) {
+              const [note, pitch] = parsedData[0];
+              setBackendPitch({ note, pitch });
+            }
+          } catch (error) {
+            console.error('데이터 파싱 오류:', error);
+          }
         }
       };
     }
@@ -191,15 +202,19 @@ const AudioStreamer = () => {
   const drawNote = () => {
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d');
-      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       const note = notes[currentNoteIndex];
 
-      if (backendPitch && backendPitch !== note.pitch) {
+      if (backendPitch && backendPitch.note !== note.pitch) {
+        incorrectNotes.current.push(note);
+      }
+
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      incorrectNotes.current.forEach(note => {
         ctx.beginPath();
         ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
         ctx.fillStyle = 'red';
         ctx.fill();
-      }
+      });
     }
   };
 
