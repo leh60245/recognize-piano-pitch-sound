@@ -26,17 +26,16 @@ const AudioStreamer = () => {
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [countdown, setCountdown] = useState(4);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
+  const [backendPitch, setBackendPitch] = useState(null); // 백엔드에서 받은 pitch 정보를 저장
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const mediaStream = useRef(null);
-  const mediaRecorder = useRef(null);
   const audioContext = useRef(null);
   const scriptProcessor = useRef(null);
   const location = useLocation();
   const [selectedImage, setSelectedImage] = useState('');
   const canvasRef = useRef(null);
-  const timeoutRef = useRef(null); // 타이머 참조를 위해 useRef 사용
-  const ws = useRef(null); // WebSocket 참조를 위해 useRef 사용
+  const ws = useRef(null);
 
   useEffect(() => {
     if (location.state?.selectedSheetMusic) {
@@ -66,24 +65,16 @@ const AudioStreamer = () => {
     };
   }, []);
 
-  const drawNextNote = () => {
-    if (!isRecording || isPaused || currentNoteIndex >= notes.length) return;
-
-    const note = notes[currentNoteIndex];
-    drawNote();
-    timeoutRef.current = setTimeout(() => {
-      setCurrentNoteIndex(prevIndex => (prevIndex + 1) % notes.length);
-    }, note.beat * 1000);
-  };
-
   useEffect(() => {
-    if (isRecording && !isPaused) {
-      drawNextNote();
-    } else {
-      clearTimeout(timeoutRef.current);
+    if (ws.current) {
+      ws.current.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.pitch) {
+          setBackendPitch(data.pitch);
+        }
+      };
     }
-    return () => clearTimeout(timeoutRef.current);
-  }, [isRecording, isPaused, currentNoteIndex]);
+  }, [ws.current]);
 
   const startCountdown = (resume = false) => {
     setIsCountingDown(true);
@@ -101,8 +92,9 @@ const AudioStreamer = () => {
   };
 
   const sendAudioData = (audioData) => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      ws.current.send(audioData);
+    if (ws.current && ws.current.readyState === WebSocket.OPEN && audioData.length > 0) {
+      const audioBlob = new Blob(audioData, { type: 'audio/wav' });
+      ws.current.send(audioBlob);
     }
   };
 
@@ -114,8 +106,7 @@ const AudioStreamer = () => {
 
   const processAudioData = async (event) => {
     const audioData = event.inputBuffer.getChannelData(0);
-    const arrayBuffer = audioData.buffer;
-    sendAudioData(arrayBuffer);
+    sendAudioData(audioData); // 실시간으로 오디오 데이터를 전송
     if (wavesurfer.current) {
       const buffer = await createAudioBuffer(audioData);
       wavesurfer.current.loadDecodedBuffer(buffer);
@@ -125,15 +116,17 @@ const AudioStreamer = () => {
   const beginRecording = () => {
     setIsRecording(true);
     setIsPaused(false);
-    setCurrentNoteIndex(0); // 녹음 시작 시 인덱스 초기화
 
     // WebSocket 연결 설정
-    ws.current = new WebSocket('ws://your-websocket-server');
+    ws.current = new WebSocket('http://127.0.0.1:5000/');
     ws.current.onopen = () => {
       console.log('WebSocket 연결 성공');
     };
     ws.current.onerror = (error) => {
       console.error('WebSocket 오류:', error);
+    };
+    ws.current.onclose = () => {
+      console.log('WebSocket 연결 종료');
     };
 
     navigator.mediaDevices.getUserMedia({ audio: true })
@@ -157,7 +150,6 @@ const AudioStreamer = () => {
   const pauseRecording = () => {
     setIsPaused(true);
     scriptProcessor.current?.disconnect();
-    clearTimeout(timeoutRef.current); // 일시정지 시 타이머 해제
   };
 
   const resumeRecording = () => {
@@ -184,7 +176,6 @@ const AudioStreamer = () => {
     if (ws.current) {
       ws.current.close();
     }
-    clearTimeout(timeoutRef.current); // 녹음 중지 시 타이머 해제
   };
 
   const drawNote = () => {
@@ -192,12 +183,26 @@ const AudioStreamer = () => {
       const ctx = canvasRef.current.getContext('2d');
       ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       const note = notes[currentNoteIndex];
-      ctx.beginPath();
-      ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
-      ctx.fillStyle = 'red';
-      ctx.fill();
+
+      if (backendPitch && backendPitch !== note.pitch) {
+        ctx.beginPath();
+        ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+      }
     }
   };
+
+  useEffect(() => {
+    if (isRecording && !isPaused && currentNoteIndex < notes.length) {
+      drawNote();
+      const timeout = setTimeout(() => {
+        setCurrentNoteIndex(prevIndex => (prevIndex + 1) % notes.length);
+      }, notes[currentNoteIndex].beat * 1000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [currentNoteIndex, isRecording, isPaused, backendPitch]);
 
   useEffect(() => {
     return () => {
