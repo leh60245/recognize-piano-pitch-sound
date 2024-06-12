@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRoutes, Link } from "react-router-dom";
 import {
+    ChakraProvider,
     Image,
     Box,
     Text,
@@ -10,8 +11,13 @@ import {
     HStack,
     VStack,
     Center,
+    useColorModeValue,
+    useColorMode,
+    IconButton,
 } from "@chakra-ui/react";
-
+import { FaMoon, FaSun } from 'react-icons/fa';
+import { keyframes } from '@emotion/react';
+import theme from './theme'
 // Routes
 
 import Setting from "./routes/setting";
@@ -32,6 +38,9 @@ import "./App.css";
 
 function Home({ props }) {
     const [hover, setHover] = useState("");
+
+    const { toggleColorMode } = useColorMode();
+    const Icon = useColorModeValue(FaMoon, FaSun);
 
     const menuList = [
         {
@@ -71,10 +80,12 @@ function Home({ props }) {
             to={menu.link}
             style={{ textDecoration: "none" }}
         >
-            <Box maxW='sm' borderWidth="10px" borderRadius='lg' border='1px' borderColor='gray.200' >
-                <Card maxW={{ base: "100%", sm: "100px" }}>
-                    <CardHeader>
-                        <Image w="50%" h="100%" id="image" src={menu.img} />
+            <Box maxW='500px'  >
+                <Card borderWidth="7px" borderRadius='25px' >
+                    <CardHeader display="flex" justifyContent="center" alignItems="center">
+             
+                        <Image w="60%" h="100%" id="image" src={menu.img} style={{ margin: "20px auto 0" }} />
+                        
                     </CardHeader>
                     <CardBody>
                         <Text fontSize="50px">{menu.text}</Text>
@@ -96,6 +107,12 @@ function Home({ props }) {
                 objectFit='cover'
                 src={logoImg}
                 alt='Dan Abramov'
+                />
+            <IconButton
+                onClick={toggleColorMode}
+                variant={"ghost"}
+                aria-label="Toggle dark mode"
+                icon={<Icon />}
             />
             <Center>
                 <HStack>{linkMenuList}</HStack>
@@ -115,7 +132,9 @@ function App() {
         { path: "/SuiSou", element: <SuiSou /> },
     ]);
 
-    return <div className="App">{routes}</div>;
+    return <ChakraProvider theme={theme}>
+        <div className="App">{routes}</div>
+    </ChakraProvider>
 }
 
 export default App;
