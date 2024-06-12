@@ -209,12 +209,18 @@ const AudioStreamer = () => {
       }
 
       ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      // Draw all incorrect notes in red
       incorrectNotes.current.forEach(note => {
         ctx.beginPath();
         ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
         ctx.fillStyle = 'red';
         ctx.fill();
       });
+      // Draw the current note in blue
+      ctx.beginPath();
+      ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
+      ctx.fillStyle = 'blue';
+      ctx.fill();
     }
   };
 
