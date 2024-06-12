@@ -29,7 +29,8 @@ const AudioStreamer = () => {
   const [backendPitch, setBackendPitch] = useState(null); // 백엔드에서 받은 pitch 정보를 저장
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
-  const mediaRecorder = useRef(null);
+  const audioContext = useRef(null);
+  const scriptProcessor = useRef(null);
   const location = useLocation();
   const [selectedImage, setSelectedImage] = useState('');
   const canvasRef = useRef(null);
@@ -68,6 +69,7 @@ const AudioStreamer = () => {
     if (ws.current) {
       ws.current.onmessage = (event) => {
         const message = event.data;
+        console.log('Received from backend:', message);
         if (message.startsWith("Recognized notes:")) {
           const notesData = message.replace("Recognized notes:", "").trim();
           const correctedData = notesData.replace(/'/g, '"'); // Replace single quotes with double quotes
@@ -87,7 +89,7 @@ const AudioStreamer = () => {
 
   const startCountdown = (resume = false) => {
     setIsCountingDown(true);
-    setCountdown(2);
+    setCountdown(4);
     const countdownInterval = setInterval(() => {
       setCountdown(prev => {
         if (prev === 1) {
@@ -100,48 +102,10 @@ const AudioStreamer = () => {
     }, 1000);
   };
 
-  const createWavHeader = (buffer, dataSize) => {
-    const header = new ArrayBuffer(44);
-    const view = new DataView(header);
-
-    /* RIFF identifier */
-    view.setUint32(0, 1380533830, false);
-    /* file length */
-    view.setUint32(4, 36 + dataSize, true);
-    /* RIFF type */
-    view.setUint32(8, 1463899717, false);
-    /* format chunk identifier */
-    view.setUint32(12, 1718449184, false);
-    /* format chunk length */
-    view.setUint32(16, 16, true);
-    /* sample format (raw) */
-    view.setUint16(20, 1, true);
-    /* channel count */
-    view.setUint16(22, 1, true);
-    /* sample rate */
-    view.setUint32(24, 44100, true);
-    /* byte rate (sample rate * block align) */
-    view.setUint32(28, 44100 * 2, true);
-    /* block align (channel count * bytes per sample) */
-    view.setUint16(32, 2, true);
-    /* bits per sample */
-    view.setUint16(34, 16, true);
-    /* data chunk identifier */
-    view.setUint32(36, 1684108385, false);
-    /* data chunk length */
-    view.setUint32(40, dataSize, true);
-
-    const combined = new Uint8Array(header.byteLength + buffer.byteLength);
-    combined.set(new Uint8Array(header), 0);
-    combined.set(new Uint8Array(buffer), header.byteLength);
-    return combined;
-  };
-
   const beginRecording = async () => {
     setIsRecording(true);
     setIsPaused(false);
 
-    // WebSocket 연결 설정
     ws.current = new WebSocket('ws://localhost:5000');
     ws.current.onopen = () => {
       console.log('WebSocket 연결 성공');
@@ -155,47 +119,64 @@ const AudioStreamer = () => {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder.current = new MediaRecorder(stream);
 
-      mediaRecorder.current.ondataavailable = (event) => {
-        if (event.data.size > 0 && ws.current.readyState === WebSocket.OPEN) {
-          event.data.arrayBuffer().then(buffer => {
-            const wavBuffer = createWavHeader(buffer, event.data.size);
-            ws.current.send(wavBuffer);
-          });
+      audioContext.current = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioContext.current.createMediaStreamSource(stream);
+      scriptProcessor.current = audioContext.current.createScriptProcessor(2048, 1, 1);
+
+      scriptProcessor.current.onaudioprocess = (event) => {
+        const audioData = event.inputBuffer.getChannelData(0);
+        if (wavesurfer.current) {
+          const buffer = audioContext.current.createBuffer(1, audioData.length, audioContext.current.sampleRate);
+          buffer.copyToChannel(audioData, 0);
+          wavesurfer.current.loadDecodedBuffer(buffer);
         }
+        sendAudioData(audioData);
       };
 
-      mediaRecorder.current.start(100); // Send data every 100ms
+      source.connect(scriptProcessor.current);
+      scriptProcessor.current.connect(audioContext.current.destination);
     } catch (err) {
       console.error("마이크 접근 오류:", err);
       setIsRecording(false);
     }
   };
 
+  const sendAudioData = (audioData) => {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN && audioData.length > 0) {
+      const audioBlob = new Blob([new Float32Array(audioData).buffer], { type: 'audio/wav' });
+      ws.current.send(audioBlob);
+    }
+  };
+
   const pauseRecording = () => {
     setIsPaused(true);
-    if (mediaRecorder.current) {
-      mediaRecorder.current.pause();
+    if (scriptProcessor.current) {
+      scriptProcessor.current.disconnect();
     }
   };
 
   const resumeRecording = () => {
     setIsPaused(false);
-    if (mediaRecorder.current) {
-      mediaRecorder.current.resume();
+    if (scriptProcessor.current) {
+      const stream = audioContext.current.createMediaStreamSource(stream);
+      stream.connect(scriptProcessor.current);
+      scriptProcessor.current.connect(audioContext.current.destination);
     }
   };
 
   const stopRecording = () => {
     setIsRecording(false);
     setIsPaused(false);
-    setCurrentNoteIndex(0); // Reset the current note index to the first note
-    incorrectNotes.current = []; // Clear the incorrect notes
-    clearCanvas(); // Clear the canvas
-    if (mediaRecorder.current) {
-      mediaRecorder.current.stop();
-      mediaRecorder.current = null;
+    setCurrentNoteIndex(0);
+    incorrectNotes.current = [];
+    clearCanvas();
+    if (scriptProcessor.current) {
+      scriptProcessor.current.disconnect();
+    }
+    if (audioContext.current) {
+      audioContext.current.close();
+      audioContext.current = null;
     }
     if (ws.current) {
       ws.current.close();
@@ -218,15 +199,13 @@ const AudioStreamer = () => {
         incorrectNotes.current.push(note);
       }
 
-      clearCanvas(); // Clear the canvas before drawing
-      // Draw all incorrect notes in red
+      clearCanvas();
       incorrectNotes.current.forEach(note => {
         ctx.beginPath();
         ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
         ctx.fillStyle = 'red';
         ctx.fill();
       });
-      // Draw the current note in blue
       ctx.beginPath();
       ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
       ctx.fillStyle = 'blue';
