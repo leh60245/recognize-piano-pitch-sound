@@ -121,19 +121,19 @@ function SuiSou () {
     function frzqXY(suisouTime) {
         var suiKatSou = 0;
         if (suisouTime < 3.5) {
-            suiKatSou = -600;
+            suiKatSou = 100;
         }
         else if (suisouTime < 5.8) {
-            suiKatSou = -550 + ((suisouTime-3.5)/(5.8-3.5))*(545-228);
+            suiKatSou = 148+((suisouTime-3.5)/(5.8-3.5))*(545-228);
         }
         else if (suisouTime < 8.6) {
-            suiKatSou = -550 + (545 - 228)+ ((suisouTime - 5.8) / (8.6 - 5.8)) * (861 - 545);
+            suiKatSou =  (465 )+ ((suisouTime - 5.8) / (8.6 - 5.8)) * (861 - 545);
         }
         else if (suisouTime < 10.7) {
-            suiKatSou = -550 + (861 - 228)+ ((suisouTime - 8.6) / (10.7 - 8.6)) * (1141 - 861);
+            suiKatSou =  (781 )+ ((suisouTime - 8.6) / (10.7 - 8.6)) * (1141 - 861);
         }
         else if (suisouTime < 13.3) {
-            suiKatSou = -550 + (1141 - 228) + ((suisouTime - 10.7) / (5.8 - 3.5)) * (1141 - 861);
+            suiKatSou = (1061) + ((suisouTime - 10.7) / (5.8 - 3.5)) * (1141 - 861);
         }
 
 

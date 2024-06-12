@@ -112,6 +112,8 @@ function Home({ props }) {
                 onClick={toggleColorMode}
                 variant={"ghost"}
                 aria-label="Toggle dark mode"
+                Size="100px"
+                fontSize='70px'
                 icon={<Icon />}
             />
             <Center>
