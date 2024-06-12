@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import WaveSurfer from 'wavesurfer.js';
 import { Box, Button, Center, Image, Text, Flex } from '@chakra-ui/react';
-import axios from 'axios';
 
 const notes = [
   { beat: 1, note: '파', pitch: 'F4', x: 228, y: 137 },
@@ -27,17 +26,16 @@ const AudioStreamer = () => {
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [countdown, setCountdown] = useState(4);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
+  const [backendPitch, setBackendPitch] = useState(null);
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
-  const mediaStream = useRef(null);
-  const mediaRecorder = useRef(null);
   const audioContext = useRef(null);
   const scriptProcessor = useRef(null);
   const location = useLocation();
   const [selectedImage, setSelectedImage] = useState('');
   const canvasRef = useRef(null);
-  const chunks = useRef([]);
-  const timeoutRef = useRef(null); // 타이머 참조를 위해 useRef 사용
+  const ws = useRef(null);
+  const incorrectNotes = useRef([]);
 
   useEffect(() => {
     if (location.state?.selectedSheetMusic) {
@@ -67,24 +65,27 @@ const AudioStreamer = () => {
     };
   }, []);
 
-  const drawNextNote = () => {
-    if (!isRecording || isPaused || currentNoteIndex >= notes.length) return;
-
-    const note = notes[currentNoteIndex];
-    drawNote();
-    timeoutRef.current = setTimeout(() => {
-      setCurrentNoteIndex(prevIndex => (prevIndex + 1) % notes.length);
-    }, note.beat * 1000);
-  };
-
   useEffect(() => {
-    if (isRecording && !isPaused) {
-      drawNextNote();
-    } else {
-      clearTimeout(timeoutRef.current);
+    if (ws.current) {
+      ws.current.onmessage = (event) => {
+        const message = event.data;
+        console.log('Received from backend:', message);
+        if (message.startsWith("Recognized notes:")) {
+          const notesData = message.replace("Recognized notes:", "").trim();
+          const correctedData = notesData.replace(/'/g, '"'); // Replace single quotes with double quotes
+          try {
+            const parsedData = JSON.parse(correctedData);
+            if (parsedData.length > 0) {
+              const [note, pitch] = parsedData[0];
+              setBackendPitch({ note, pitch });
+            }
+          } catch (error) {
+            console.error('데이터 파싱 오류:', error);
+          }
+        }
+      };
     }
-    return () => clearTimeout(timeoutRef.current);
-  }, [isRecording, isPaused, currentNoteIndex]);
+  }, [ws.current]);
 
   const startCountdown = (resume = false) => {
     setIsCountingDown(true);
@@ -101,106 +102,128 @@ const AudioStreamer = () => {
     }, 1000);
   };
 
-  const sendAudioData = (blob) => {
-    const formData = new FormData();
-    formData.append('audio', blob, 'recording.wav');
-    axios.post('http://your-django-server/api/audio/', formData)
-      .then(response => console.log('서버 응답:', response))
-      .catch(error => console.error('오디오 데이터 전송 오류:', error));
-  };
-
-  const createAudioBuffer = async (audioData) => {
-    const buffer = audioContext.current.createBuffer(1, audioData.length, audioContext.current.sampleRate);
-    buffer.copyToChannel(audioData, 0);
-    return buffer;
-  };
-
-  const processAudioData = async (event) => {
-    const audioData = event.inputBuffer.getChannelData(0);
-    if (wavesurfer.current) {
-      const buffer = await createAudioBuffer(audioData);
-      wavesurfer.current.loadDecodedBuffer(buffer);
-    }
-  };
-
-  const beginRecording = () => {
+  const beginRecording = async () => {
     setIsRecording(true);
     setIsPaused(false);
-    setCurrentNoteIndex(0); // 녹음 시작 시 인덱스 초기화
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
-        mediaStream.current = stream;
-        audioContext.current = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioContext.current.createMediaStreamSource(stream);
-        scriptProcessor.current = audioContext.current.createScriptProcessor(2048, 1, 1);
 
-        scriptProcessor.current.onaudioprocess = processAudioData;
+    ws.current = new WebSocket('ws://localhost:5000');
+    ws.current.onopen = () => {
+      console.log('WebSocket 연결 성공');
+    };
+    ws.current.onerror = (error) => {
+      console.error('WebSocket 오류:', error);
+    };
+    ws.current.onclose = () => {
+      console.log('WebSocket 연결 종료');
+    };
 
-        source.connect(scriptProcessor.current);
-        scriptProcessor.current.connect(audioContext.current.destination);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-        mediaRecorder.current = new MediaRecorder(stream);
-        mediaRecorder.current.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            const blob = new Blob([event.data], { type: 'audio/wav' });
-            sendAudioData(blob);
-          }
-        };
+      audioContext.current = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioContext.current.createMediaStreamSource(stream);
+      scriptProcessor.current = audioContext.current.createScriptProcessor(2048, 1, 1);
 
-        mediaRecorder.current.start(1000); // 1초마다 데이터 수집 및 전송
-      })
-      .catch(err => {
-        console.error("마이크 접근 오류:", err);
-        setIsRecording(false);
-      });
+      scriptProcessor.current.onaudioprocess = (event) => {
+        if (!isRecording) return;
+        const audioData = event.inputBuffer.getChannelData(0);
+        const float32Buffer = new Float32Array(audioData);
+        ws.current.send(float32Buffer.buffer);
+
+        if (wavesurfer.current) {
+          const buffer = audioContext.current.createBuffer(1, audioData.length, audioContext.current.sampleRate);
+          buffer.copyToChannel(audioData, 0);
+          wavesurfer.current.loadDecodedBuffer(buffer);
+        }
+      };
+
+      source.connect(scriptProcessor.current);
+      scriptProcessor.current.connect(audioContext.current.destination);
+    } catch (err) {
+      console.error("마이크 접근 오류:", err);
+      setIsRecording(false);
+    }
   };
 
   const pauseRecording = () => {
     setIsPaused(true);
-    mediaRecorder.current?.pause();
-    scriptProcessor.current?.disconnect();
-    clearTimeout(timeoutRef.current); // 일시정지 시 타이머 해제
+    if (scriptProcessor.current) {
+      scriptProcessor.current.disconnect();
+    }
   };
 
   const resumeRecording = () => {
     setIsPaused(false);
-    mediaRecorder.current?.resume();
-    const source = audioContext.current.createMediaStreamSource(mediaStream.current);
-    source.connect(scriptProcessor.current);
-    scriptProcessor.current.connect(audioContext.current.destination);
-    scriptProcessor.current.onaudioprocess = processAudioData;
+    if (scriptProcessor.current) {
+      const stream = audioContext.current.createMediaStreamSource(stream);
+      stream.connect(scriptProcessor.current);
+      scriptProcessor.current.connect(audioContext.current.destination);
+    }
   };
 
   const stopRecording = () => {
     setIsRecording(false);
     setIsPaused(false);
-    if (mediaRecorder.current && mediaRecorder.current.state !== 'inactive') {
-      mediaRecorder.current.stop();
-    }
-    if (mediaStream.current) {
-      mediaStream.current.getTracks().forEach(track => track.stop());
-      mediaStream.current = null;
-    }
+    setCurrentNoteIndex(0);
+    incorrectNotes.current = [];
+    clearCanvas();
     if (scriptProcessor.current) {
       scriptProcessor.current.disconnect();
     }
-    if (audioContext.current && audioContext.current.state !== 'closed') {
-      audioContext.current.close().catch(error => console.error('AudioContext 닫기 오류:', error));
+    if (audioContext.current) {
+      audioContext.current.close();
+      audioContext.current = null;
     }
-    clearTimeout(timeoutRef.current); // 녹음 중지 시 타이머 해제
+    if (ws.current) {
+      ws.current.close();
+    }
+  };
+
+  const clearCanvas = () => {
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext('2d');
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    }
   };
 
   const drawNote = () => {
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d');
-      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       const note = notes[currentNoteIndex];
+
+      if (backendPitch && backendPitch.note !== note.pitch) {
+        incorrectNotes.current.push(note);
+      }
+
+      clearCanvas();
+      incorrectNotes.current.forEach(note => {
+        ctx.beginPath();
+        ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+      });
       ctx.beginPath();
       ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
-      ctx.fillStyle = 'red';
+      ctx.fillStyle = 'blue';
       ctx.fill();
     }
   };
+
+  useEffect(() => {
+    if (isRecording && !isPaused && currentNoteIndex < notes.length) {
+      drawNote();
+      const timeout = setTimeout(() => {
+        const nextIndex = (currentNoteIndex + 1) % notes.length;
+        setCurrentNoteIndex(nextIndex);
+        if (nextIndex === 0) {
+          incorrectNotes.current = [];
+          clearCanvas();
+        }
+      }, notes[currentNoteIndex].beat * 1000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [currentNoteIndex, isRecording, isPaused, backendPitch]);
 
   useEffect(() => {
     return () => {
@@ -218,8 +241,8 @@ const AudioStreamer = () => {
         {isRecording && !isPaused && (
           <Button onClick={pauseRecording} mx={2}>녹음 일시정지</Button>
         )}
-        {!isRecording && !isCountingDown && isPaused && (
-          <Button onClick={() => startCountdown(true)} mx={2}>녹음 재개</Button>
+        {isPaused && (
+          <Button onClick={resumeRecording} mx={2}>녹음 재개</Button>
         )}
         {(isRecording || isPaused) && (
           <Button onClick={stopRecording} mx={2}>녹음 중지</Button>
