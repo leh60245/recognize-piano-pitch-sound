@@ -87,7 +87,7 @@ const AudioStreamer = () => {
 
   const startCountdown = (resume = false) => {
     setIsCountingDown(true);
-    setCountdown(4);
+    setCountdown(2);
     const countdownInterval = setInterval(() => {
       setCountdown(prev => {
         if (prev === 1) {
@@ -238,7 +238,12 @@ const AudioStreamer = () => {
     if (isRecording && !isPaused && currentNoteIndex < notes.length) {
       drawNote();
       const timeout = setTimeout(() => {
-        setCurrentNoteIndex(prevIndex => (prevIndex + 1) % notes.length);
+        const nextIndex = (currentNoteIndex + 1) % notes.length;
+        setCurrentNoteIndex(nextIndex);
+        if (nextIndex === 0) {
+          incorrectNotes.current = [];
+          clearCanvas();
+        }
       }, notes[currentNoteIndex].beat * 1000);
 
       return () => clearTimeout(timeout);
