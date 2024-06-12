@@ -190,12 +190,22 @@ const AudioStreamer = () => {
   const stopRecording = () => {
     setIsRecording(false);
     setIsPaused(false);
+    setCurrentNoteIndex(0); // Reset the current note index to the first note
+    incorrectNotes.current = []; // Clear the incorrect notes
+    clearCanvas(); // Clear the canvas
     if (mediaRecorder.current) {
       mediaRecorder.current.stop();
       mediaRecorder.current = null;
     }
     if (ws.current) {
       ws.current.close();
+    }
+  };
+
+  const clearCanvas = () => {
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext('2d');
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     }
   };
 
@@ -208,7 +218,7 @@ const AudioStreamer = () => {
         incorrectNotes.current.push(note);
       }
 
-      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      clearCanvas(); // Clear the canvas before drawing
       // Draw all incorrect notes in red
       incorrectNotes.current.forEach(note => {
         ctx.beginPath();
@@ -251,8 +261,8 @@ const AudioStreamer = () => {
         {isRecording && !isPaused && (
           <Button onClick={pauseRecording} mx={2}>녹음 일시정지</Button>
         )}
-        {!isRecording && !isCountingDown && isPaused && (
-          <Button onClick={() => startCountdown(true)} mx={2}>녹음 재개</Button>
+        {isPaused && (
+          <Button onClick={resumeRecording} mx={2}>녹음 재개</Button>
         )}
         {(isRecording || isPaused) && (
           <Button onClick={stopRecording} mx={2}>녹음 중지</Button>
