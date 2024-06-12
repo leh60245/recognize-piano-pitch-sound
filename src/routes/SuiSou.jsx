@@ -110,7 +110,7 @@ function SuiSou () {
 
     function frzqDial(suisouTime) {
         var suiKatSou = 1;
-        if (suisouTime > 3.7) { suiKatSou = parseInt((suisouTime - 3.7) / (0.2)) % 4; }
+        if (suisouTime > 1.3) { suiKatSou = parseInt((suisouTime - 1.3) / (0.303125)) % 8; } //상단 기준 3.6초 시작 13.3초 끝 9.7/(4*8)
         else {
             suiKatSou = 0;
         }
@@ -140,7 +140,7 @@ function SuiSou () {
 
 
         else {
-            suiKatSou = -500 + suisouTime;
+            suiKatSou = 100 + suisouTime;
         }
         return suiKatSou;
     }
@@ -170,11 +170,9 @@ function SuiSou () {
 
 
 
-        audioRef.current.addEventListener('timeupdate', updateTime);
+        const intervalId = setInterval(updateTime, 50); // Update every 100 milliseconds
 
-        return () => {
-            audioRef.current.removeEventListener('timeupdate', updateTime);
-        };
+        return () => clearInterval(intervalId); // Clean up interval on unmount
     }, []);
 
 
@@ -212,7 +210,7 @@ function SuiSou () {
                        <div class="image">
                            <img src={sheet1} alt='SuiSou1'/> 
                                </div>
-                       <div class="bar" style={{ left: progressBarLeft + 'px', top: progressBarTop + 'px'}} >
+                       <div class="bar" style={{ position: "absolute", transform: `translateX(${progressBarLeft}px) translateY(${progressBarTop}px)` }} >
                            <img src={barimg} alt='SuiSou1' />
                            </div>
                        </div>
