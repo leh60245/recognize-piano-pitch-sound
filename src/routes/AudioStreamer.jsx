@@ -26,7 +26,7 @@ const AudioStreamer = () => {
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [countdown, setCountdown] = useState(4);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
-  const [backendPitch, setBackendPitch] = useState(null); // 백엔드에서 받은 pitch 정보를 저장
+  const [backendPitch, setBackendPitch] = useState(null);
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const audioContext = useRef(null);
@@ -125,13 +125,16 @@ const AudioStreamer = () => {
       scriptProcessor.current = audioContext.current.createScriptProcessor(2048, 1, 1);
 
       scriptProcessor.current.onaudioprocess = (event) => {
+        if (!isRecording) return;
         const audioData = event.inputBuffer.getChannelData(0);
+        const float32Buffer = new Float32Array(audioData);
+        ws.current.send(float32Buffer.buffer);
+
         if (wavesurfer.current) {
           const buffer = audioContext.current.createBuffer(1, audioData.length, audioContext.current.sampleRate);
           buffer.copyToChannel(audioData, 0);
           wavesurfer.current.loadDecodedBuffer(buffer);
         }
-        sendAudioData(audioData);
       };
 
       source.connect(scriptProcessor.current);
@@ -139,13 +142,6 @@ const AudioStreamer = () => {
     } catch (err) {
       console.error("마이크 접근 오류:", err);
       setIsRecording(false);
-    }
-  };
-
-  const sendAudioData = (audioData) => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN && audioData.length > 0) {
-      const audioBlob = new Blob([new Float32Array(audioData).buffer], { type: 'audio/wav' });
-      ws.current.send(audioBlob);
     }
   };
 
