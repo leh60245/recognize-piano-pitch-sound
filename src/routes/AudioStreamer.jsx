@@ -6,18 +6,18 @@ import { Box, Button, Center, Image, Text, Flex } from '@chakra-ui/react';
 const notes = [
   { beat: 1, note: '파', pitch: 'F3', x: 228, y: 137 },
   { beat: 1, note: '솔', pitch: 'G3', x: 302, y: 130 },
-  // { beat: 1, note: '라', pitch: 'A3', x: 377, y: 124 },
-  // { beat: 1, note: '파', pitch: 'F3', x: 452, y: 137 },
-  // { beat: 1, note: '파', pitch: 'F3', x: 545, y: 137 },
-  // { beat: 1, note: '솔', pitch: 'G3', x: 619, y: 130 },
-  // { beat: 1, note: '라', pitch: 'A3', x: 694, y: 124 },
-  // { beat: 1, note: '파', pitch: 'F3', x: 768, y: 137 },
-  // { beat: 1, note: '라', pitch: 'A3', x: 861, y: 124 },
-  // { beat: 1, note: '시플랫', pitch: 'A#3', x: 936, y: 117 },
-  // { beat: 2, note: '도', pitch: 'C4', x: 1009, y: 110 },
-  // { beat: 1, note: '라', pitch: 'A3', x: 1141, y: 124 },
-  // { beat: 1, note: '시플랫', pitch: 'A#3', x: 1215, y: 117 },
-  // { beat: 2, note: '도', pitch: 'C4', x: 1289, y: 110 },
+  { beat: 1, note: '라', pitch: 'A3', x: 377, y: 124 },
+  { beat: 1, note: '파', pitch: 'F3', x: 452, y: 137 },
+  { beat: 1, note: '파', pitch: 'F3', x: 545, y: 137 },
+  { beat: 1, note: '솔', pitch: 'G3', x: 619, y: 130 },
+  { beat: 1, note: '라', pitch: 'A3', x: 694, y: 124 },
+  { beat: 1, note: '파', pitch: 'F3', x: 768, y: 137 },
+  { beat: 1, note: '라', pitch: 'A3', x: 861, y: 124 },
+  { beat: 1, note: '시플랫', pitch: 'A#3', x: 936, y: 117 },
+  { beat: 2, note: '도', pitch: 'C4', x: 1009, y: 110 },
+  { beat: 1, note: '라', pitch: 'A3', x: 1141, y: 124 },
+  { beat: 1, note: '시플랫', pitch: 'A#3', x: 1215, y: 117 },
+  { beat: 2, note: '도', pitch: 'C4', x: 1289, y: 110 },
 ];
 
 const AudioStreamer = () => {
@@ -185,9 +185,6 @@ const AudioStreamer = () => {
       audioContext.current.close();
       audioContext.current = null;
     }
-    if (ws.current) {
-      ws.current.close();
-    }
   };
 
   const clearCanvas = () => {
@@ -221,7 +218,7 @@ const AudioStreamer = () => {
         setTimeout(() => {
           if (currentNoteIndex + 1 === notes.length) {
             setShowRepeatPrompt(true); // 마지막 노트에 도달했을 때 메시지 표시
-            stopRecording(); // 소리 인식 중지
+            setIsRecording(false); // 소리 인식 중지
           } else {
             setCurrentNoteIndex((currentNoteIndex + 1) % notes.length);
             setIncorrectMessage('');
@@ -240,6 +237,8 @@ const AudioStreamer = () => {
   const handleRepeat = () => {
     clearCanvas(); // 캔버스 비우기
     setCurrentNoteIndex(0);
+    setBackendNote(null); // 현재 note 초기화
+    setIncorrectMessage('');
     setShowRepeatPrompt(false);
     beginRecording();
   };
