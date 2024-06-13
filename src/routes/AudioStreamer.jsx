@@ -28,6 +28,7 @@ const AudioStreamer = () => {
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
   const [backendNote, setBackendNote] = useState(null); // 백엔드에서 받은 note 정보를 저장
   const [incorrectMessage, setIncorrectMessage] = useState(''); // 잘못된 note에 대한 메시지 저장
+  const [showRepeatPrompt, setShowRepeatPrompt] = useState(false); // 반복 메시지 표시 상태
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const audioContext = useRef(null);
@@ -112,6 +113,7 @@ const AudioStreamer = () => {
   const beginRecording = async () => {
     setIsRecording(true);
     setIsPaused(false);
+    setShowRepeatPrompt(false); // 숨기기
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -213,16 +215,26 @@ const AudioStreamer = () => {
         const nextNote = notes[(currentNoteIndex + 1) % notes.length];
         isWaiting.current = true; // Set waiting state
         setTimeout(() => {
-          setCurrentNoteIndex((currentNoteIndex + 1) % notes.length);
-          setIncorrectMessage('');
-          ctx.fillStyle = 'rgba(0, 0, 255, 0.5)'; // Blue with opacity
-          ctx.fillRect(nextNote.x - 15, nextNote.y - 15, 30, 30); // Draw semi-transparent square
+          if (currentNoteIndex + 1 === notes.length) {
+            setShowRepeatPrompt(true); // 마지막 노트에 도달했을 때 메시지 표시
+          } else {
+            setCurrentNoteIndex((currentNoteIndex + 1) % notes.length);
+            setIncorrectMessage('');
+            ctx.fillStyle = 'rgba(0, 0, 255, 0.5)'; // Blue with opacity
+            ctx.fillRect(nextNote.x - 15, nextNote.y - 15, 30, 30); // Draw semi-transparent square
+          }
           isWaiting.current = false; // Reset waiting state
         }, 500); // 0.5초 후에 다음 노트로 이동
       } else if (backendNote !== null) {
         setIncorrectMessage(`올바르지 않은 음: ${backendNote}`);
       }
     }
+  };
+
+  const handleRepeat = () => {
+    setCurrentNoteIndex(0);
+    setShowRepeatPrompt(false);
+    beginRecording();
   };
 
   useEffect(() => {
@@ -270,6 +282,12 @@ const AudioStreamer = () => {
         <Text fontSize="xl">현재 인식된 음: {backendNote || '없음'}</Text>
         <Text fontSize="xl" color="red">{incorrectMessage}</Text>
       </Box>
+      {showRepeatPrompt && (
+        <Box mt={4}>
+          <Text fontSize="xl">모든 노트를 연주했습니다. 다시 반복하시겠습니까?</Text>
+          <Button onClick={handleRepeat} mt={2}>다시 시작</Button>
+        </Box>
+      )}
     </Center>
   );
 };
