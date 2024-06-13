@@ -135,6 +135,9 @@ function SuiSou () {
         else if (suisouTime < 13.3) {
             suiKatSou = (1061) + ((suisouTime - 10.7) / (5.8 - 3.5)) * (1141 - 861);
         }
+        else if (suisouTime < 25) {
+            suiKatSou = (150) + ((suisouTime - 13.0) / (9.7)) * (645 - 328)*4;
+        }
 
 
 
