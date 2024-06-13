@@ -130,7 +130,9 @@ const AudioStreamer = () => {
           buffer.copyToChannel(audioData, 0);
           wavesurfer.current.loadDecodedBuffer(buffer);
         }
-        sendAudioData(audioData);
+        if (!showRepeatPrompt) {
+          sendAudioData(audioData);
+        }
       };
 
       source.connect(scriptProcessor.current);
@@ -232,6 +234,7 @@ const AudioStreamer = () => {
   };
 
   const handleRepeat = () => {
+    clearCanvas(); // 캔버스 비우기
     setCurrentNoteIndex(0);
     setShowRepeatPrompt(false);
     beginRecording();
