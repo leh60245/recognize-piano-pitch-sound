@@ -196,6 +196,9 @@ const AudioStreamer = () => {
       ctx.fill();
 
       if (backendNote === note.pitch) {
+        const nextNote = notes[(currentNoteIndex + 1) % notes.length];
+        ctx.fillStyle = 'rgba(0, 0, 255, 0.5)'; // Blue with opacity
+        ctx.fillRect(nextNote.x - 15, nextNote.y - 15, 30, 30); // Draw semi-transparent square
         setTimeout(() => {
           setCurrentNoteIndex((currentNoteIndex + 1) % notes.length);
           setIncorrectMessage('');
