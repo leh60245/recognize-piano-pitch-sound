@@ -17,6 +17,7 @@
     "@chakra-ui/react": "^2.8.2",
     "axios": "^1.7.2",
     "framer-motion": "^4.1.17",
+    "pitch-detect": "^0.0.2",
     "pitchfinder": "^2.3.2",
     "react": "^18.2.0",
     "react-color": "^2.19.3",
