@@ -195,11 +195,13 @@ const AudioStreamer = () => {
       ctx.fillStyle = backendNote === note.pitch ? 'blue' : 'red';
       ctx.fill();
 
-      if (backendNote !== note.pitch) {
-        setIncorrectMessage(`올바르지 않은 음: ${backendNote}`);
+      if (backendNote === note.pitch) {
+        setTimeout(() => {
+          setCurrentNoteIndex((currentNoteIndex + 1) % notes.length);
+          setIncorrectMessage('');
+        }, 500); // 0.5초 후에 다음 노트로 이동
       } else {
-        setCurrentNoteIndex((currentNoteIndex + 1) % notes.length);
-        setIncorrectMessage('');
+        setIncorrectMessage(`올바르지 않은 음: ${backendNote}`);
       }
     }
   };
