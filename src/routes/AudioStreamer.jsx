@@ -13,10 +13,10 @@ const notes = [
   { beat: 1, note: '라', pitch: 'A4', x: 694, y: 124 },
   { beat: 1, note: '파', pitch: 'F4', x: 768, y: 137 },
   { beat: 1, note: '라', pitch: 'A4', x: 861, y: 124 },
-  { beat: 1, note: '시플랫', pitch: 'Bb4', x: 936, y: 117 },
+  { beat: 1, note: '시플랫', pitch: 'A#4', x: 936, y: 117 },
   { beat: 2, note: '도', pitch: 'C5', x: 1009, y: 110 },
   { beat: 1, note: '라', pitch: 'A4', x: 1141, y: 124 },
-  { beat: 1, note: '시플랫', pitch: 'Bb4', x: 1215, y: 117 },
+  { beat: 1, note: '시플랫', pitch: 'A#4', x: 1215, y: 117 },
   { beat: 2, note: '도', pitch: 'C5', x: 1289, y: 110 },
 ];
 
@@ -26,7 +26,7 @@ const AudioStreamer = () => {
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [countdown, setCountdown] = useState(4);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
-  const [backendPitch, setBackendPitch] = useState(null); // 백엔드에서 받은 pitch 정보를 저장
+  const [backendNote, setBackendNote] = useState(null); // 백엔드에서 받은 note 정보를 저장
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const audioContext = useRef(null);
@@ -66,26 +66,29 @@ const AudioStreamer = () => {
   }, []);
 
   useEffect(() => {
-    if (ws.current) {
-      ws.current.onmessage = (event) => {
-        const message = event.data;
-        console.log('Received from backend:', message);
-        if (message.startsWith("Recognized notes:")) {
-          const notesData = message.replace("Recognized notes:", "").trim();
-          const correctedData = notesData.replace(/'/g, '"'); // Replace single quotes with double quotes
-          try {
-            const parsedData = JSON.parse(correctedData);
-            if (parsedData.length > 0) {
-              const [note, pitch] = parsedData[0];
-              setBackendPitch({ note, pitch });
-            }
-          } catch (error) {
-            console.error('데이터 파싱 오류:', error);
-          }
-        }
-      };
-    }
-  }, [ws.current]);
+    ws.current = new WebSocket('ws://localhost:5000');
+    ws.current.onopen = () => {
+      console.log('WebSocket 연결 성공');
+    };
+    ws.current.onerror = (error) => {
+      console.error('WebSocket 오류:', error);
+    };
+    ws.current.onclose = () => {
+      console.log('WebSocket 연결 종료');
+    };
+
+    ws.current.onmessage = (event) => {
+      const message = event.data;
+      console.log('Received from backend:', message);
+      setBackendNote(message);
+    };
+
+    return () => {
+      if (ws.current) {
+        ws.current.close();
+      }
+    };
+  }, []);
 
   const startCountdown = (resume = false) => {
     setIsCountingDown(true);
@@ -105,17 +108,6 @@ const AudioStreamer = () => {
   const beginRecording = async () => {
     setIsRecording(true);
     setIsPaused(false);
-
-    ws.current = new WebSocket('ws://localhost:5000');
-    ws.current.onopen = () => {
-      console.log('WebSocket 연결 성공');
-    };
-    ws.current.onerror = (error) => {
-      console.error('WebSocket 오류:', error);
-    };
-    ws.current.onclose = () => {
-      console.log('WebSocket 연결 종료');
-    };
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -144,9 +136,8 @@ const AudioStreamer = () => {
 
   const sendAudioData = (audioData) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN && audioData.length > 0) {
-      // const audioBlob = new Blob([new Float32Array(audioData).buffer], { type: 'audio/wav' });
       const float32Buffer = new Float32Array(audioData);
-      ws.current.send(float32Buffer);
+      ws.current.send(float32Buffer.buffer);
     }
   };
 
@@ -196,7 +187,7 @@ const AudioStreamer = () => {
       const ctx = canvasRef.current.getContext('2d');
       const note = notes[currentNoteIndex];
 
-      if (backendPitch && backendPitch.note !== note.pitch) {
+      if (backendNote && backendNote !== note.pitch) {
         incorrectNotes.current.push(note);
       }
 
@@ -224,11 +215,12 @@ const AudioStreamer = () => {
           incorrectNotes.current = [];
           clearCanvas();
         }
+        setBackendNote(null); // Reset backendNote for the next note
       }, notes[currentNoteIndex].beat * 1000);
 
       return () => clearTimeout(timeout);
     }
-  }, [currentNoteIndex, isRecording, isPaused, backendPitch]);
+  }, [currentNoteIndex, isRecording, isPaused, backendNote]);
 
   useEffect(() => {
     return () => {
@@ -265,6 +257,9 @@ const AudioStreamer = () => {
           <canvas ref={canvasRef} width="1500" height="250" style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)' }} />
         </Box>
       )}
+      <Box mt={4}>
+        <Text fontSize="xl">현재 인식된 음: {backendNote || '없음'}</Text>
+      </Box>
     </Center>
   );
 };
