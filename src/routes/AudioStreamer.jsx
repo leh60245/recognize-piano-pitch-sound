@@ -4,20 +4,20 @@ import WaveSurfer from 'wavesurfer.js';
 import { Box, Button, Center, Image, Text, Flex } from '@chakra-ui/react';
 
 const notes = [
-  { beat: 1, note: '파', pitch: 'F4', x: 228, y: 137 },
-  { beat: 1, note: '솔', pitch: 'G4', x: 302, y: 130 },
-  { beat: 1, note: '라', pitch: 'A4', x: 377, y: 124 },
-  { beat: 1, note: '파', pitch: 'F4', x: 452, y: 137 },
-  { beat: 1, note: '파', pitch: 'F4', x: 545, y: 137 },
-  { beat: 1, note: '솔', pitch: 'G4', x: 619, y: 130 },
-  { beat: 1, note: '라', pitch: 'A4', x: 694, y: 124 },
-  { beat: 1, note: '파', pitch: 'F4', x: 768, y: 137 },
-  { beat: 1, note: '라', pitch: 'A4', x: 861, y: 124 },
-  { beat: 1, note: '시플랫', pitch: 'A#4', x: 936, y: 117 },
-  { beat: 2, note: '도', pitch: 'C5', x: 1009, y: 110 },
-  { beat: 1, note: '라', pitch: 'A4', x: 1141, y: 124 },
-  { beat: 1, note: '시플랫', pitch: 'A#4', x: 1215, y: 117 },
-  { beat: 2, note: '도', pitch: 'C5', x: 1289, y: 110 },
+  { beat: 1, note: '파', pitch: 'F3', x: 228, y: 137 },
+  { beat: 1, note: '솔', pitch: 'G3', x: 302, y: 130 },
+  { beat: 1, note: '라', pitch: 'A3', x: 377, y: 124 },
+  { beat: 1, note: '파', pitch: 'F3', x: 452, y: 137 },
+  { beat: 1, note: '파', pitch: 'F3', x: 545, y: 137 },
+  { beat: 1, note: '솔', pitch: 'G3', x: 619, y: 130 },
+  { beat: 1, note: '라', pitch: 'A3', x: 694, y: 124 },
+  { beat: 1, note: '파', pitch: 'F3', x: 768, y: 137 },
+  { beat: 1, note: '라', pitch: 'A3', x: 861, y: 124 },
+  { beat: 1, note: '시플랫', pitch: 'A#3', x: 936, y: 117 },
+  { beat: 2, note: '도', pitch: 'C4', x: 1009, y: 110 },
+  { beat: 1, note: '라', pitch: 'A3', x: 1141, y: 124 },
+  { beat: 1, note: '시플랫', pitch: 'A#3', x: 1215, y: 117 },
+  { beat: 2, note: '도', pitch: 'C4', x: 1289, y: 110 },
 ];
 
 const AudioStreamer = () => {
@@ -80,7 +80,9 @@ const AudioStreamer = () => {
     ws.current.onmessage = (event) => {
       const message = event.data;
       console.log('Received from backend:', message);
-      setBackendNote(message);
+      if (message) {
+        setBackendNote(message);
+      }
     };
 
     return () => {
@@ -187,7 +189,7 @@ const AudioStreamer = () => {
       const ctx = canvasRef.current.getContext('2d');
       const note = notes[currentNoteIndex];
 
-      if (backendNote && backendNote !== note.pitch) {
+      if (backendNote !== note.pitch) {
         incorrectNotes.current.push(note);
       }
 
@@ -215,7 +217,7 @@ const AudioStreamer = () => {
           incorrectNotes.current = [];
           clearCanvas();
         }
-        setBackendNote(null); // Reset backendNote for the next note
+        // setBackendNote(null); // Reset backendNote for the next note
       }, notes[currentNoteIndex].beat * 1000);
 
       return () => clearTimeout(timeout);
