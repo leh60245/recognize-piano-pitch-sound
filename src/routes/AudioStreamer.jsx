@@ -239,8 +239,9 @@ const AudioStreamer = () => {
           const noteKey = `${note.note}_${note.x}_${note.y}`;
           if (newNotes[noteKey]) {
             newNotes[noteKey].count += 1;
+            newNotes[noteKey].index = currentNoteIndex;
           } else {
-            newNotes[noteKey] = { ...note, count: 1 };
+            newNotes[noteKey] = { ...note, count: 1, index: currentNoteIndex };
           }
           return newNotes;
         });
@@ -306,8 +307,8 @@ const AudioStreamer = () => {
         <Box mt={4}>
           <Text fontSize="xl">모든 노트를 연주했습니다. 다시 반복하시겠습니까?</Text>
           <Text fontSize="lg" color="red">틀린 노트:</Text>
-          {Object.entries(incorrectNotes).map(([key, note]) => (
-            <Text key={key} color="red">{`노트: ${note.note}, 위치: (${note.x}, ${note.y}), 틀린 횟수: ${note.count}`}</Text>
+          {Object.values(incorrectNotes).map(note => (
+            <Text key={note.index} color="red">{`노트 인덱스: ${note.index}, 틀린 횟수: ${note.count}`}</Text>
           ))}
           <Button onClick={handleRepeat} mt={2}>다시 시작</Button>
         </Box>
