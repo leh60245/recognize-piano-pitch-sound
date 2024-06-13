@@ -27,6 +27,7 @@ const AudioStreamer = () => {
   const [countdown, setCountdown] = useState(4);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
   const [backendNote, setBackendNote] = useState(null); // 백엔드에서 받은 note 정보를 저장
+  const [incorrectMessage, setIncorrectMessage] = useState(''); // 잘못된 note에 대한 메시지 저장
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const audioContext = useRef(null);
@@ -35,7 +36,6 @@ const AudioStreamer = () => {
   const [selectedImage, setSelectedImage] = useState('');
   const canvasRef = useRef(null);
   const ws = useRef(null);
-  const incorrectNotes = useRef([]);
 
   useEffect(() => {
     if (location.state?.selectedSheetMusic) {
@@ -163,7 +163,6 @@ const AudioStreamer = () => {
     setIsRecording(false);
     setIsPaused(false);
     setCurrentNoteIndex(0);
-    incorrectNotes.current = [];
     clearCanvas();
     if (scriptProcessor.current) {
       scriptProcessor.current.disconnect();
@@ -190,16 +189,13 @@ const AudioStreamer = () => {
       const note = notes[currentNoteIndex];
 
       if (backendNote !== note.pitch) {
-        incorrectNotes.current.push(note);
+        setIncorrectMessage(`올바르지 않은 음: ${backendNote}`);
+      } else {
+        setCurrentNoteIndex((currentNoteIndex + 1) % notes.length);
+        setIncorrectMessage('');
       }
 
       clearCanvas();
-      incorrectNotes.current.forEach(note => {
-        ctx.beginPath();
-        ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
-        ctx.fillStyle = 'red';
-        ctx.fill();
-      });
       ctx.beginPath();
       ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
       ctx.fillStyle = 'blue';
@@ -208,21 +204,10 @@ const AudioStreamer = () => {
   };
 
   useEffect(() => {
-    if (isRecording && !isPaused && currentNoteIndex < notes.length) {
+    if (isRecording && !isPaused) {
       drawNote();
-      const timeout = setTimeout(() => {
-        const nextIndex = (currentNoteIndex + 1) % notes.length;
-        setCurrentNoteIndex(nextIndex);
-        if (nextIndex === 0) {
-          incorrectNotes.current = [];
-          clearCanvas();
-        }
-        // setBackendNote(null); // Reset backendNote for the next note
-      }, notes[currentNoteIndex].beat * 1000);
-
-      return () => clearTimeout(timeout);
     }
-  }, [currentNoteIndex, isRecording, isPaused, backendNote]);
+  }, [backendNote, isRecording, isPaused]);
 
   useEffect(() => {
     return () => {
@@ -261,6 +246,7 @@ const AudioStreamer = () => {
       )}
       <Box mt={4}>
         <Text fontSize="xl">현재 인식된 음: {backendNote || '없음'}</Text>
+        <Text fontSize="xl" color="red">{incorrectMessage}</Text>
       </Box>
     </Center>
   );
