@@ -37,6 +37,7 @@ const AudioStreamer = () => {
   const canvasRef = useRef(null);
   const ws = useRef(null);
   const isWaiting = useRef(false); // 0.5초 대기 상태를 나타내는 상태
+  const isSoundDetected = useRef(false); // 소리 인식 상태
 
   useEffect(() => {
     if (location.state?.selectedSheetMusic) {
@@ -121,6 +122,7 @@ const AudioStreamer = () => {
 
       scriptProcessor.current.onaudioprocess = (event) => {
         const audioData = event.inputBuffer.getChannelData(0);
+        detectSound(audioData); // 소리 인식 함수 호출
         if (wavesurfer.current) {
           const buffer = audioContext.current.createBuffer(1, audioData.length, audioContext.current.sampleRate);
           buffer.copyToChannel(audioData, 0);
@@ -137,8 +139,13 @@ const AudioStreamer = () => {
     }
   };
 
+  const detectSound = (audioData) => {
+    const threshold = 0.01; // 소리 인식 임계값
+    isSoundDetected.current = audioData.some(sample => Math.abs(sample) > threshold);
+  };
+
   const sendAudioData = (audioData) => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN && audioData.length > 0 && !isWaiting.current) {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN && audioData.length > 0 && !isWaiting.current && isSoundDetected.current) {
       const float32Buffer = new Float32Array(audioData);
       ws.current.send(float32Buffer.buffer);
     }
