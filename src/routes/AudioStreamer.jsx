@@ -6,18 +6,18 @@ import { Box, Button, Center, Image, Text, Flex } from '@chakra-ui/react';
 const notes = [
   { beat: 1, note: '파', pitch: 'F3', x: 228, y: 137 },
   { beat: 1, note: '솔', pitch: 'G3', x: 302, y: 130 },
-  { beat: 1, note: '라', pitch: 'A3', x: 377, y: 124 },
-  { beat: 1, note: '파', pitch: 'F3', x: 452, y: 137 },
-  { beat: 1, note: '파', pitch: 'F3', x: 545, y: 137 },
-  { beat: 1, note: '솔', pitch: 'G3', x: 619, y: 130 },
-  { beat: 1, note: '라', pitch: 'A3', x: 694, y: 124 },
-  { beat: 1, note: '파', pitch: 'F3', x: 768, y: 137 },
-  { beat: 1, note: '라', pitch: 'A3', x: 861, y: 124 },
-  { beat: 1, note: '시플랫', pitch: 'A#3', x: 936, y: 117 },
-  { beat: 2, note: '도', pitch: 'C4', x: 1009, y: 110 },
-  { beat: 1, note: '라', pitch: 'A3', x: 1141, y: 124 },
-  { beat: 1, note: '시플랫', pitch: 'A#3', x: 1215, y: 117 },
-  { beat: 2, note: '도', pitch: 'C4', x: 1289, y: 110 },
+  // { beat: 1, note: '라', pitch: 'A3', x: 377, y: 124 },
+  // { beat: 1, note: '파', pitch: 'F3', x: 452, y: 137 },
+  // { beat: 1, note: '파', pitch: 'F3', x: 545, y: 137 },
+  // { beat: 1, note: '솔', pitch: 'G3', x: 619, y: 130 },
+  // { beat: 1, note: '라', pitch: 'A3', x: 694, y: 124 },
+  // { beat: 1, note: '파', pitch: 'F3', x: 768, y: 137 },
+  // { beat: 1, note: '라', pitch: 'A3', x: 861, y: 124 },
+  // { beat: 1, note: '시플랫', pitch: 'A#3', x: 936, y: 117 },
+  // { beat: 2, note: '도', pitch: 'C4', x: 1009, y: 110 },
+  // { beat: 1, note: '라', pitch: 'A3', x: 1141, y: 124 },
+  // { beat: 1, note: '시플랫', pitch: 'A#3', x: 1215, y: 117 },
+  // { beat: 2, note: '도', pitch: 'C4', x: 1289, y: 110 },
 ];
 
 const AudioStreamer = () => {
@@ -29,6 +29,7 @@ const AudioStreamer = () => {
   const [backendNote, setBackendNote] = useState(null); // 백엔드에서 받은 note 정보를 저장
   const [incorrectMessage, setIncorrectMessage] = useState(''); // 잘못된 note에 대한 메시지 저장
   const [showRepeatPrompt, setShowRepeatPrompt] = useState(false); // 반복 메시지 표시 상태
+  const [incorrectNotes, setIncorrectNotes] = useState([]); // 잘못된 노트 저장
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const audioContext = useRef(null);
@@ -114,6 +115,7 @@ const AudioStreamer = () => {
     setIsRecording(true);
     setIsPaused(false);
     setShowRepeatPrompt(false); // 숨기기
+    setIncorrectNotes([]); // 잘못된 노트 초기화
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -149,7 +151,7 @@ const AudioStreamer = () => {
   };
 
   const sendAudioData = (audioData) => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN && audioData.length > 0 && !isWaiting.current && isSoundDetected.current) {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN && audioData.length > 0 && !isWaiting.current && isSoundDetected.current && !showRepeatPrompt) {
       const float32Buffer = new Float32Array(audioData);
       ws.current.send(float32Buffer.buffer);
     }
@@ -228,6 +230,7 @@ const AudioStreamer = () => {
           isWaiting.current = false; // Reset waiting state
         }, 500); // 0.5초 후에 다음 노트로 이동
       } else if (backendNote !== null) {
+        setIncorrectNotes(prevNotes => [...prevNotes, note]); // 잘못된 노트 저장
         setIncorrectMessage(`올바르지 않은 음: ${backendNote}`);
       }
     }
@@ -288,6 +291,10 @@ const AudioStreamer = () => {
       {showRepeatPrompt && (
         <Box mt={4}>
           <Text fontSize="xl">모든 노트를 연주했습니다. 다시 반복하시겠습니까?</Text>
+          <Text fontSize="lg" color="red">틀린 노트:</Text>
+          {incorrectNotes.map((note, index) => (
+            <Text key={index} color="red">{`노트: ${note.note}, 위치: (${note.x}, ${note.y})`}</Text>
+          ))}
           <Button onClick={handleRepeat} mt={2}>다시 시작</Button>
         </Box>
       )}
