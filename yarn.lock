@@ -8072,6 +8072,11 @@ pirates@^4.0.1, pirates@^4.0.4:
   resolved "https://registry.npmjs.org/pirates/-/pirates-4.0.6.tgz"
   integrity sha512-saLsH7WeYYPiD25LDuLRRY/i+6HaPYr6G1OUlN39otzkSTxKnubR9RTxS3/Kk50s1g2JTgFwWQDQyplC5/SHZg==
 
+pitch-detect@^0.0.2:
+  version "0.0.2"
+  resolved "https://registry.npmjs.org/pitch-detect/-/pitch-detect-0.0.2.tgz"
+  integrity sha512-e44AFssQIAUZ6frhn90/4Eaf0fn4s3oNAAsct080BnYXsGNqqUiBg/6iFjFA5snT+VQKlUbqURxX68UB7H6dQw==
+
 pitchfinder@^2.3.2:
   version "2.3.2"
   resolved "https://registry.npmjs.org/pitchfinder/-/pitchfinder-2.3.2.tgz"

@@ -2,22 +2,23 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import WaveSurfer from 'wavesurfer.js';
 import { Box, Button, Center, Image, Text, Flex } from '@chakra-ui/react';
+import * as Pitchfinder from "pitchfinder";
 
 const notes = [
-  { beat: 1, note: '파', pitch: 'F4', x: 228, y: 137 },
-  { beat: 1, note: '솔', pitch: 'G4', x: 302, y: 130 },
-  { beat: 1, note: '라', pitch: 'A4', x: 377, y: 124 },
-  { beat: 1, note: '파', pitch: 'F4', x: 452, y: 137 },
-  { beat: 1, note: '파', pitch: 'F4', x: 545, y: 137 },
-  { beat: 1, note: '솔', pitch: 'G4', x: 619, y: 130 },
-  { beat: 1, note: '라', pitch: 'A4', x: 694, y: 124 },
-  { beat: 1, note: '파', pitch: 'F4', x: 768, y: 137 },
-  { beat: 1, note: '라', pitch: 'A4', x: 861, y: 124 },
-  { beat: 1, note: '시플랫', pitch: 'Bb4', x: 936, y: 117 },
-  { beat: 2, note: '도', pitch: 'C5', x: 1009, y: 110 },
-  { beat: 1, note: '라', pitch: 'A4', x: 1141, y: 124 },
-  { beat: 1, note: '시플랫', pitch: 'Bb4', x: 1215, y: 117 },
-  { beat: 2, note: '도', pitch: 'C5', x: 1289, y: 110 },
+  { beat: 1, note: '파', pitch: 'F#', x: 228, y: 137 },
+  { beat: 1, note: '솔', pitch: 'G#', x: 302, y: 130 },
+  { beat: 1, note: '라', pitch: 'A#', x: 377, y: 124 },
+  { beat: 1, note: '파', pitch: 'F#', x: 452, y: 137 },
+  { beat: 1, note: '파', pitch: 'F#', x: 545, y: 137 },
+  { beat: 1, note: '솔', pitch: 'G#', x: 619, y: 130 },
+  { beat: 1, note: '라', pitch: 'A#', x: 694, y: 124 },
+  { beat: 1, note: '파', pitch: 'F#', x: 768, y: 137 },
+  { beat: 1, note: '라', pitch: 'A#', x: 861, y: 124 },
+  { beat: 1, note: '시', pitch: 'B#', x: 936, y: 117 },
+  { beat: 2, note: '도', pitch: 'C#', x: 1009, y: 110 },
+  { beat: 1, note: '라', pitch: 'A#', x: 1141, y: 124 },
+  { beat: 1, note: '시', pitch: 'B#', x: 1215, y: 117 },
+  { beat: 2, note: '도', pitch: 'C#', x: 1289, y: 110 },
 ];
 
 const AudioStreamer = () => {
@@ -26,7 +27,7 @@ const AudioStreamer = () => {
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [countdown, setCountdown] = useState(4);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
-  const [backendPitch, setBackendPitch] = useState(null);
+  const [recognizedPitch, setRecognizedPitch] = useState(null); // Recognized pitch
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const audioContext = useRef(null);
@@ -34,7 +35,6 @@ const AudioStreamer = () => {
   const location = useLocation();
   const [selectedImage, setSelectedImage] = useState('');
   const canvasRef = useRef(null);
-  const ws = useRef(null);
   const incorrectNotes = useRef([]);
 
   useEffect(() => {
@@ -65,28 +65,6 @@ const AudioStreamer = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (ws.current) {
-      ws.current.onmessage = (event) => {
-        const message = event.data;
-        console.log('Received from backend:', message);
-        if (message.startsWith("Recognized notes:")) {
-          const notesData = message.replace("Recognized notes:", "").trim();
-          const correctedData = notesData.replace(/'/g, '"'); // Replace single quotes with double quotes
-          try {
-            const parsedData = JSON.parse(correctedData);
-            if (parsedData.length > 0) {
-              const [note, pitch] = parsedData[0];
-              setBackendPitch({ note, pitch });
-            }
-          } catch (error) {
-            console.error('데이터 파싱 오류:', error);
-          }
-        }
-      };
-    }
-  }, [ws.current]);
-
   const startCountdown = (resume = false) => {
     setIsCountingDown(true);
     setCountdown(4);
@@ -106,30 +84,25 @@ const AudioStreamer = () => {
     setIsRecording(true);
     setIsPaused(false);
 
-    ws.current = new WebSocket('ws://localhost:5000');
-    ws.current.onopen = () => {
-      console.log('WebSocket 연결 성공');
-    };
-    ws.current.onerror = (error) => {
-      console.error('WebSocket 오류:', error);
-    };
-    ws.current.onclose = () => {
-      console.log('WebSocket 연결 종료');
-    };
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       audioContext.current = new (window.AudioContext || window.webkitAudioContext)();
       const source = audioContext.current.createMediaStreamSource(stream);
       scriptProcessor.current = audioContext.current.createScriptProcessor(2048, 1, 1);
-
+      const keys = ['B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#'];
+      
       scriptProcessor.current.onaudioprocess = (event) => {
-        if (!isRecording) return;
         const audioData = event.inputBuffer.getChannelData(0);
-        const float32Buffer = new Float32Array(audioData);
-        ws.current.send(float32Buffer.buffer);
-
+        const detectPitch = Pitchfinder.AMDF();
+        const frequency = detectPitch(audioData);
+        if (frequency) {
+          const c0 = 440.0 * Math.pow(2.0, -4.75);
+          const halfStepsBelowMiddleC = Math.round(12.0 * Math.log2(frequency / c0));
+          const key = keys[Math.floor(halfStepsBelowMiddleC % 12)];
+          setRecognizedPitch(key);
+          console.log(key);
+        }
         if (wavesurfer.current) {
           const buffer = audioContext.current.createBuffer(1, audioData.length, audioContext.current.sampleRate);
           buffer.copyToChannel(audioData, 0);
@@ -174,9 +147,6 @@ const AudioStreamer = () => {
       audioContext.current.close();
       audioContext.current = null;
     }
-    if (ws.current) {
-      ws.current.close();
-    }
   };
 
   const clearCanvas = () => {
@@ -191,7 +161,7 @@ const AudioStreamer = () => {
       const ctx = canvasRef.current.getContext('2d');
       const note = notes[currentNoteIndex];
 
-      if (backendPitch && backendPitch.note !== note.pitch) {
+      if (recognizedPitch && recognizedPitch !== note.pitch) {
         incorrectNotes.current.push(note);
       }
 
@@ -223,7 +193,7 @@ const AudioStreamer = () => {
 
       return () => clearTimeout(timeout);
     }
-  }, [currentNoteIndex, isRecording, isPaused, backendPitch]);
+  }, [currentNoteIndex, isRecording, isPaused, recognizedPitch]);
 
   useEffect(() => {
     return () => {
