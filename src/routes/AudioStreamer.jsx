@@ -221,6 +221,7 @@ const AudioStreamer = () => {
         setTimeout(() => {
           if (currentNoteIndex + 1 === notes.length) {
             setShowRepeatPrompt(true); // 마지막 노트에 도달했을 때 메시지 표시
+            stopRecording(); // 소리 인식 중지
           } else {
             setCurrentNoteIndex((currentNoteIndex + 1) % notes.length);
             setIncorrectMessage('');
