@@ -5,19 +5,19 @@ import { Box, Button, Center, Image, Text, Flex } from '@chakra-ui/react';
 
 const notes = [
   { beat: 1, note: '파', pitch: 'F3', x: 228, y: 137 },
-  // { beat: 1, note: '솔', pitch: 'G3', x: 302, y: 130 },
-  // { beat: 1, note: '라', pitch: 'A3', x: 377, y: 124 },
-  // { beat: 1, note: '파', pitch: 'F3', x: 452, y: 137 },
-  // { beat: 1, note: '파', pitch: 'F3', x: 545, y: 137 },
-  // { beat: 1, note: '솔', pitch: 'G3', x: 619, y: 130 },
-  // { beat: 1, note: '라', pitch: 'A3', x: 694, y: 124 },
-  // { beat: 1, note: '파', pitch: 'F3', x: 768, y: 137 },
-  // { beat: 1, note: '라', pitch: 'A3', x: 861, y: 124 },
-  // { beat: 1, note: '시플랫', pitch: 'A#3', x: 936, y: 117 },
-  // { beat: 2, note: '도', pitch: 'C4', x: 1009, y: 110 },
-  // { beat: 1, note: '라', pitch: 'A3', x: 1141, y: 124 },
-  // { beat: 1, note: '시플랫', pitch: 'A#3', x: 1215, y: 117 },
-  // { beat: 2, note: '도', pitch: 'C4', x: 1289, y: 110 },
+  { beat: 1, note: '솔', pitch: 'G3', x: 302, y: 130 },
+  { beat: 1, note: '라', pitch: 'A3', x: 377, y: 124 },
+  { beat: 1, note: '파', pitch: 'F3', x: 452, y: 137 },
+  { beat: 1, note: '파', pitch: 'F3', x: 545, y: 137 },
+  { beat: 1, note: '솔', pitch: 'G3', x: 619, y: 130 },
+  { beat: 1, note: '라', pitch: 'A3', x: 694, y: 124 },
+  { beat: 1, note: '파', pitch: 'F3', x: 768, y: 137 },
+  { beat: 1, note: '라', pitch: 'A3', x: 861, y: 124 },
+  { beat: 1, note: '시플랫', pitch: 'A#3', x: 936, y: 117 },
+  { beat: 2, note: '도', pitch: 'C4', x: 1009, y: 110 },
+  { beat: 1, note: '라', pitch: 'A3', x: 1141, y: 124 },
+  { beat: 1, note: '시플랫', pitch: 'A#3', x: 1215, y: 117 },
+  { beat: 2, note: '도', pitch: 'C4', x: 1289, y: 110 },
 ];
 
 const AudioStreamer = () => {
@@ -252,10 +252,22 @@ const AudioStreamer = () => {
 
   const handleRepeat = () => {
     clearCanvas(); // 캔버스 비우기
+    setIncorrectMessage('');
     setCurrentNoteIndex(0);
     setBackendNote(null); // 현재 note 초기화
     setShowRepeatPrompt(false);
-    beginRecording();
+    setIsCountingDown(true);
+    setCountdown(4);
+    const countdownInterval = setInterval(() => {
+      setCountdown(prev => {
+        if (prev === 1) {
+          clearInterval(countdownInterval);
+          setIsCountingDown(false);
+          beginRecording();
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   useEffect(() => {
@@ -308,7 +320,7 @@ const AudioStreamer = () => {
           <Text fontSize="xl">모든 노트를 연주했습니다. 다시 반복하시겠습니까?</Text>
           <Text fontSize="lg" color="red">틀린 노트:</Text>
           {Object.values(incorrectNotes).map(note => (
-            <Text key={note.index} color="red">{`노트 인덱스: ${note.index}, 틀린 횟수: ${note.count}`}</Text>
+            <Text key={note.index} color="red">{`위치: ${note.index}, 노트: ${note.note}, 틀린 횟수: ${note.count}`}</Text>
           ))}
           <Button onClick={handleRepeat} mt={2}>다시 시작</Button>
         </Box>
