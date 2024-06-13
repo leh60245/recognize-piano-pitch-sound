@@ -36,6 +36,7 @@ const AudioStreamer = () => {
   const [selectedImage, setSelectedImage] = useState('');
   const canvasRef = useRef(null);
   const ws = useRef(null);
+  const isWaiting = useRef(false); // 0.5초 대기 상태를 나타내는 상태
 
   useEffect(() => {
     if (location.state?.selectedSheetMusic) {
@@ -137,7 +138,7 @@ const AudioStreamer = () => {
   };
 
   const sendAudioData = (audioData) => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN && audioData.length > 0) {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN && audioData.length > 0 && !isWaiting.current) {
       const float32Buffer = new Float32Array(audioData);
       ws.current.send(float32Buffer.buffer);
     }
@@ -183,6 +184,10 @@ const AudioStreamer = () => {
     }
   };
 
+  const compareNotes = (backendNote, note) => {
+    return backendNote && note && backendNote[0] === note[0];
+  };
+
   const drawNote = () => {
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d');
@@ -193,17 +198,19 @@ const AudioStreamer = () => {
       if (backendNote !== null) {
         ctx.beginPath();
         ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
-        ctx.fillStyle = backendNote === note.pitch ? 'blue' : 'red';
+        ctx.fillStyle = compareNotes(backendNote, note.pitch) ? 'blue' : 'red';
         ctx.fill();
       }
 
-      if (backendNote === note.pitch) {
+      if (compareNotes(backendNote, note.pitch)) {
         const nextNote = notes[(currentNoteIndex + 1) % notes.length];
-        ctx.fillStyle = 'rgba(0, 0, 255, 0.5)'; // Blue with opacity
-        ctx.fillRect(nextNote.x - 15, nextNote.y - 15, 30, 30); // Draw semi-transparent square
+        isWaiting.current = true; // Set waiting state
         setTimeout(() => {
           setCurrentNoteIndex((currentNoteIndex + 1) % notes.length);
           setIncorrectMessage('');
+          ctx.fillStyle = 'rgba(0, 0, 255, 0.5)'; // Blue with opacity
+          ctx.fillRect(nextNote.x - 15, nextNote.y - 15, 30, 30); // Draw semi-transparent square
+          isWaiting.current = false; // Reset waiting state
         }, 500); // 0.5초 후에 다음 노트로 이동
       } else if (backendNote !== null) {
         setIncorrectMessage(`올바르지 않은 음: ${backendNote}`);
