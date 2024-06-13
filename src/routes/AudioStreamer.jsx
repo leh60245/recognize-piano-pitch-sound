@@ -188,18 +188,19 @@ const AudioStreamer = () => {
       const ctx = canvasRef.current.getContext('2d');
       const note = notes[currentNoteIndex];
 
+      clearCanvas();
+
+      ctx.beginPath();
+      ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
+      ctx.fillStyle = backendNote === note.pitch ? 'blue' : 'red';
+      ctx.fill();
+
       if (backendNote !== note.pitch) {
         setIncorrectMessage(`올바르지 않은 음: ${backendNote}`);
       } else {
         setCurrentNoteIndex((currentNoteIndex + 1) % notes.length);
         setIncorrectMessage('');
       }
-
-      clearCanvas();
-      ctx.beginPath();
-      ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
-      ctx.fillStyle = 'blue';
-      ctx.fill();
     }
   };
 
