@@ -218,8 +218,13 @@ const AudioStreamer = () => {
         setTimeout(() => {
           if (currentNoteIndex + 1 === notes.length) {
             setShowRepeatPrompt(true); // 마지막 노트에 도달했을 때 메시지 표시
-            setIncorrectMessage("");
             setIsRecording(false); // 소리 인식 중지
+
+            // Draw red semi-transparent boxes for incorrect notes
+            Object.values(incorrectNotes).forEach(note => {
+              ctx.fillStyle = 'rgba(255, 0, 0, 0.5)'; // Red with opacity
+              ctx.fillRect(note.x - 15, note.y - 15, 30, 30);
+            });
           } else {
             setCurrentNoteIndex((currentNoteIndex + 1) % notes.length);
             setIncorrectMessage('');
@@ -248,7 +253,6 @@ const AudioStreamer = () => {
     clearCanvas(); // 캔버스 비우기
     setCurrentNoteIndex(0);
     setBackendNote(null); // 현재 note 초기화
-    setIncorrectMessage('');
     setShowRepeatPrompt(false);
     beginRecording();
   };
