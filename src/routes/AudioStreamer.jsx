@@ -190,10 +190,12 @@ const AudioStreamer = () => {
 
       clearCanvas();
 
-      ctx.beginPath();
-      ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
-      ctx.fillStyle = backendNote === note.pitch ? 'blue' : 'red';
-      ctx.fill();
+      if (backendNote !== null) {
+        ctx.beginPath();
+        ctx.arc(note.x, note.y, 10, 0, 2 * Math.PI);
+        ctx.fillStyle = backendNote === note.pitch ? 'blue' : 'red';
+        ctx.fill();
+      }
 
       if (backendNote === note.pitch) {
         const nextNote = notes[(currentNoteIndex + 1) % notes.length];
@@ -203,7 +205,7 @@ const AudioStreamer = () => {
           setCurrentNoteIndex((currentNoteIndex + 1) % notes.length);
           setIncorrectMessage('');
         }, 500); // 0.5초 후에 다음 노트로 이동
-      } else {
+      } else if (backendNote !== null) {
         setIncorrectMessage(`올바르지 않은 음: ${backendNote}`);
       }
     }
