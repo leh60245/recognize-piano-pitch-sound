@@ -1,16 +1,23 @@
 import { useEffect, useState } from "react";
 import { useRoutes, Link } from "react-router-dom";
 import {
-  Image,
-  Box,
-  Text,
-  Card,
-  CardHeader,
-  CardBody,
-  HStack,
-  Center,
+    ChakraProvider,
+    Image,
+    Box,
+    Text,
+    Card,
+    CardHeader,
+    CardBody,
+    HStack,
+    VStack,
+    Center,
+    useColorModeValue,
+    useColorMode,
+    IconButton,
 } from "@chakra-ui/react";
-
+import { FaMoon, FaSun } from 'react-icons/fa';
+import { keyframes } from '@emotion/react';
+import theme from './theme'
 // Routes
 
 import Setting from "./routes/setting";
@@ -30,7 +37,10 @@ import sheetmenuIcon from "./src/sheetmenuIcon.png"
 import "./App.css";
 
 function Home({ props }) {
-  const [hover, setHover] = useState("");
+    const [hover, setHover] = useState("");
+
+    const { toggleColorMode } = useColorMode();
+    const Icon = useColorModeValue(FaMoon, FaSun);
 
     const menuList = [
         {
@@ -64,35 +74,53 @@ function Home({ props }) {
     ];
 
 
-  const linkMenuList = menuList.map((menu) => (
-    <Link
-      key={menu.id}
-      to={menu.link}
-      style={{ textDecoration: "none" }}
-    >
-      <Box w="100%" h="100%" border="20px" backgroundColor="#009E73">
-        <Card maxW={{ base: "100%", sm: "200px" }}>
-          <CardHeader>
-            <Image w="100%" h="100%" id="image" src={menu.img} />
-          </CardHeader>
-          <CardBody>
-            <Text fontSize="50px">{menu.text}</Text>
-          </CardBody>
-        </Card>
-      </Box>
-    </Link>
-  ));
+    const linkMenuList = menuList.map((menu) => (
+        <Link
+            key={menu.id}
+            to={menu.link}
+            style={{ textDecoration: "none" }}
+        >
+            <Box maxW='500px'  >
+                <Card borderWidth="7px" borderRadius='25px' >
+                    <CardHeader display="flex" justifyContent="center" alignItems="center">
+             
+                        <Image w="60%" h="100%" id="image" src={menu.img} style={{ margin: "20px auto 0" }} />
+                        
+                    </CardHeader>
+                    <CardBody>
+                        <Text fontSize="50px">{menu.text}</Text>
+                    </CardBody>
+                </Card>
+            </Box>
+        </Link>
+    ));
 
-  useEffect(() => {
-    console.log(hover);
-  }, [hover]);
+    useEffect(() => {
+        console.log(hover);
+    }, [hover]);
 
 
-  return (
-    <Center>
-      <HStack>{linkMenuList}</HStack>
-    </Center>
-  );
+    return (
+        <VStack>
+            <Image
+                w="50%"
+                objectFit='cover'
+                src={logoImg}
+                alt='Dan Abramov'
+                />
+            <IconButton
+                onClick={toggleColorMode}
+                variant={"ghost"}
+                aria-label="Toggle dark mode"
+                Size="100px"
+                fontSize='70px'
+                icon={<Icon />}
+            />
+            <Center>
+                <HStack>{linkMenuList}</HStack>
+            </Center>
+        </VStack>
+    );
 }
 
 function App() {
@@ -105,7 +133,10 @@ function App() {
         { path: "/audiostreamer", element: <AudioStreamer /> },
         { path: "/SuiSou", element: <SuiSou /> },
     ]);
-  return <div className="App">{routes}</div>;
+
+    return <ChakraProvider theme={theme}>
+        <div className="App">{routes}</div>
+    </ChakraProvider>
 }
 
 export default App;

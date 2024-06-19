@@ -109,8 +109,8 @@ function SuiSou () {
 
 
     function frzqDial(suisouTime) {
-        var suiKatSou = 0;
-        if (suisouTime > 3.7) { suiKatSou = parseInt((suisouTime - 3.7) / (0.1)) % 4; }
+        var suiKatSou = 1;
+        if (suisouTime > 1.3) { suiKatSou = parseInt((suisouTime - 1.3) / (0.303125)) % 8; } //상단 기준 3.6초 시작 13.3초 끝 9.7/(4*8)
         else {
             suiKatSou = 0;
         }
@@ -121,26 +121,29 @@ function SuiSou () {
     function frzqXY(suisouTime) {
         var suiKatSou = 0;
         if (suisouTime < 3.5) {
-            suiKatSou = -600;
+            suiKatSou = 100;
         }
         else if (suisouTime < 5.8) {
-            suiKatSou = -550 + ((suisouTime-3.5)/(5.8-3.5))*(545-228);
+            suiKatSou = 148+((suisouTime-3.5)/(5.8-3.5))*(545-228);
         }
         else if (suisouTime < 8.6) {
-            suiKatSou = -550 + (545 - 228)+ ((suisouTime - 5.8) / (8.6 - 5.8)) * (861 - 545);
+            suiKatSou =  (465 )+ ((suisouTime - 5.8) / (8.6 - 5.8)) * (861 - 545);
         }
         else if (suisouTime < 10.7) {
-            suiKatSou = -550 + (861 - 228)+ ((suisouTime - 8.6) / (10.7 - 8.6)) * (1141 - 861);
+            suiKatSou =  (781 )+ ((suisouTime - 8.6) / (10.7 - 8.6)) * (1141 - 861);
         }
         else if (suisouTime < 13.3) {
-            suiKatSou = -550 + (1141 - 228) + ((suisouTime - 10.7) / (5.8 - 3.5)) * (1141 - 861);
+            suiKatSou = (1061) + ((suisouTime - 10.7) / (5.8 - 3.5)) * (1141 - 861);
+        }
+        else if (suisouTime < 25) {
+            suiKatSou = (150) + ((suisouTime - 13.0) / (9.7)) * (645 - 328)*4;
         }
 
 
 
 
         else {
-            suiKatSou = -500 + suisouTime;
+            suiKatSou = 100 + suisouTime;
         }
         return suiKatSou;
     }
@@ -170,11 +173,9 @@ function SuiSou () {
 
 
 
-        audioRef.current.addEventListener('timeupdate', updateTime);
+        const intervalId = setInterval(updateTime, 50); // Update every 100 milliseconds
 
-        return () => {
-            audioRef.current.removeEventListener('timeupdate', updateTime);
-        };
+        return () => clearInterval(intervalId); // Clean up interval on unmount
     }, []);
 
 
@@ -212,7 +213,7 @@ function SuiSou () {
                        <div class="image">
                            <img src={sheet1} alt='SuiSou1'/> 
                                </div>
-                       <div class="bar" style={{ left: progressBarLeft + 'px', top: progressBarTop + 'px'}} >
+                       <div class="bar" style={{ position: "absolute", transform: `translateX(${progressBarLeft}px) translateY(${progressBarTop}px)` }} >
                            <img src={barimg} alt='SuiSou1' />
                            </div>
                        </div>
