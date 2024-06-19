@@ -21,26 +21,27 @@ const notes = [
 ];
 
 const AudioStreamer = () => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [isCountingDown, setIsCountingDown] = useState(false);
-  const [countdown, setCountdown] = useState(4);
-  const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
-  const [backendNote, setBackendNote] = useState(null); // 백엔드에서 받은 note 정보를 저장
-  const [incorrectMessage, setIncorrectMessage] = useState(''); // 잘못된 note에 대한 메시지 저장
+  const [isRecording, setIsRecording] = useState(false); // 녹음 상태
+  const [isPaused, setIsPaused] = useState(false); // 일시정지 상태
+  const [isCountingDown, setIsCountingDown] = useState(false); // 카운트다운 상태
+  const [countdown, setCountdown] = useState(4); // 카운트다운 타이머
+  const [currentNoteIndex, setCurrentNoteIndex] = useState(0); // 현재 노트 인덱스
+  const [backendNote, setBackendNote] = useState(null); // 백엔드에서 받은 노트 정보
+  const [incorrectMessage, setIncorrectMessage] = useState(''); // 잘못된 노트에 대한 메시지
   const [showRepeatPrompt, setShowRepeatPrompt] = useState(false); // 반복 메시지 표시 상태
   const [incorrectNotes, setIncorrectNotes] = useState({}); // 잘못된 노트 저장
-  const waveformRef = useRef(null);
-  const wavesurfer = useRef(null);
-  const audioContext = useRef(null);
-  const scriptProcessor = useRef(null);
-  const location = useLocation();
-  const [selectedImage, setSelectedImage] = useState('');
-  const canvasRef = useRef(null);
-  const ws = useRef(null);
-  const isWaiting = useRef(false); // 0.5초 대기 상태를 나타내는 상태
+  const waveformRef = useRef(null); // WaveSurfer 참조
+  const wavesurfer = useRef(null); // WaveSurfer 인스턴스
+  const audioContext = useRef(null); // AudioContext 인스턴스
+  const scriptProcessor = useRef(null); // ScriptProcessorNode 인스턴스
+  const location = useLocation(); // 현재 위치
+  const [selectedImage, setSelectedImage] = useState(''); // 선택된 악보 이미지
+  const canvasRef = useRef(null); // 캔버스 참조
+  const ws = useRef(null); // WebSocket 참조
+  const isWaiting = useRef(false); // 0.5초 대기 상태
   const isSoundDetected = useRef(false); // 소리 인식 상태
 
+  // 선택된 악보 이미지를 설정
   useEffect(() => {
     if (location.state?.selectedSheetMusic) {
       import(`../src/sheet/${location.state.selectedSheetMusic}`)
@@ -49,6 +50,7 @@ const AudioStreamer = () => {
     }
   }, [location.state]);
 
+  // WaveSurfer 초기화 및 정리
   useEffect(() => {
     if (waveformRef.current && !wavesurfer.current) {
       wavesurfer.current = WaveSurfer.create({
@@ -69,6 +71,7 @@ const AudioStreamer = () => {
     };
   }, []);
 
+  // WebSocket 연결 초기화 및 정리
   useEffect(() => {
     ws.current = new WebSocket('ws://localhost:5000');
     ws.current.onopen = () => {
@@ -96,6 +99,7 @@ const AudioStreamer = () => {
     };
   }, []);
 
+  // 카운트다운 시작
   const startCountdown = (resume = false) => {
     setIsCountingDown(true);
     setCountdown(4);
@@ -111,6 +115,7 @@ const AudioStreamer = () => {
     }, 1000);
   };
 
+  // 녹음 시작
   const beginRecording = async () => {
     setIsRecording(true);
     setIsPaused(false);
@@ -145,11 +150,13 @@ const AudioStreamer = () => {
     }
   };
 
+  // 소리 인식 함수
   const detectSound = (audioData) => {
     const threshold = 0.01; // 소리 인식 임계값
     isSoundDetected.current = audioData.some(sample => Math.abs(sample) > threshold);
   };
 
+  // 오디오 데이터 전송
   const sendAudioData = (audioData) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN && audioData.length > 0 && !isWaiting.current && isSoundDetected.current && !showRepeatPrompt) {
       const float32Buffer = new Float32Array(audioData);
@@ -157,6 +164,7 @@ const AudioStreamer = () => {
     }
   };
 
+  // 녹음 일시정지
   const pauseRecording = () => {
     setIsPaused(true);
     if (scriptProcessor.current) {
@@ -164,6 +172,7 @@ const AudioStreamer = () => {
     }
   };
 
+  // 녹음 재개
   const resumeRecording = () => {
     setIsPaused(false);
     if (scriptProcessor.current) {
@@ -173,6 +182,7 @@ const AudioStreamer = () => {
     }
   };
 
+  // 녹음 중지
   const stopRecording = () => {
     setIsRecording(false);
     setIsPaused(false);
@@ -187,6 +197,7 @@ const AudioStreamer = () => {
     }
   };
 
+  // 캔버스 비우기
   const clearCanvas = () => {
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d');
@@ -194,10 +205,12 @@ const AudioStreamer = () => {
     }
   };
 
+  // 노트 비교 함수
   const compareNotes = (backendNote, note) => {
     return backendNote && note && backendNote[0] === note[0];
   };
 
+  // 노트 그리기
   const drawNote = () => {
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d');
@@ -214,25 +227,25 @@ const AudioStreamer = () => {
 
       if (compareNotes(backendNote, note.pitch)) {
         const nextNote = notes[(currentNoteIndex + 1) % notes.length];
-        isWaiting.current = true; // Set waiting state
+        isWaiting.current = true; // 대기 상태 설정
         setTimeout(() => {
           if (currentNoteIndex + 1 === notes.length) {
             setShowRepeatPrompt(true); // 마지막 노트에 도달했을 때 메시지 표시
             setIsRecording(false); // 소리 인식 중지
 
-            // Draw red semi-transparent boxes for incorrect notes
+            // 잘못된 노트에 빨간 반투명 상자 그리기
             Object.values(incorrectNotes).forEach(note => {
-              ctx.fillStyle = 'rgba(255, 0, 0, 0.5)'; // Red with opacity
+              ctx.fillStyle = 'rgba(255, 0, 0, 0.5)'; // 빨간색 불투명도
               ctx.fillRect(note.x - 15, note.y - 15, 30, 30);
             });
           } else {
             setCurrentNoteIndex((currentNoteIndex + 1) % notes.length);
             setIncorrectMessage('');
-            ctx.fillStyle = 'rgba(0, 0, 255, 0.5)'; // Blue with opacity
-            ctx.fillRect(nextNote.x - 15, nextNote.y - 15, 30, 30); // Draw semi-transparent square
+            ctx.fillStyle = 'rgba(0, 0, 255, 0.5)'; // 파란색 불투명도
+            ctx.fillRect(nextNote.x - 15, nextNote.y - 15, 30, 30); // 반투명 사각형 그리기
           }
-          isWaiting.current = false; // Reset waiting state
-        }, 500); // 0.5초 후에 다음 노트로 이동
+          isWaiting.current = false; // 대기 상태 해제
+        }, 500); // 0.5초 후 다음 노트로 이동
       } else if (backendNote !== null) {
         setIncorrectNotes(prevNotes => {
           const newNotes = { ...prevNotes };
@@ -250,11 +263,12 @@ const AudioStreamer = () => {
     }
   };
 
+  // 반복 기능 핸들러
   const handleRepeat = () => {
     clearCanvas(); // 캔버스 비우기
     setIncorrectMessage('');
     setCurrentNoteIndex(0);
-    setBackendNote(null); // 현재 note 초기화
+    setBackendNote(null); // 현재 노트 초기화
     setShowRepeatPrompt(false);
     setIsCountingDown(true);
     setCountdown(4);
@@ -270,12 +284,14 @@ const AudioStreamer = () => {
     }, 1000);
   };
 
+  // 녹음 상태에 따라 노트 그리기
   useEffect(() => {
     if (isRecording && !isPaused) {
       drawNote();
     }
   }, [backendNote, isRecording, isPaused]);
 
+  // 컴포넌트 언마운트 시 녹음 중지
   useEffect(() => {
     return () => {
       stopRecording();
