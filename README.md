@@ -3,8 +3,8 @@
 해당 프로젝트의 웹은 프론트의 React와 백엔드의 Django로 개발되었으며 각각의 git repository가 있습니다. 프론트와 백엔드는 websocket을 이용해 서로 통신하여 정보를 주고 받습니다.
 git repository 주소:
 
-- 프론트(원본): [https://github.com/leh60245/react-cloud](https://github.com/leh60245/recognize-piano-pitch-sound)
-- 백: [https://github.com/leh60245/fastapi](https://github.com/JerryJang/pytest)
+- 프론트(원본): [leh60245/recognize-piano-pitch-sound](https://github.com/leh60245/recognize-piano-pitch-sound)
+- 백: [JerryJang/pytest](https://github.com/JerryJang/pytest)
 
 ## 설치
 
